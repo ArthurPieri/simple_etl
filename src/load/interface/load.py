@@ -43,7 +43,7 @@ class LoadInterface(ABC):
 
     @abstractmethod
     def _get_max_dates_from_lake(self, delta_date_columns, **kwargs):
-        ...
+        """This method should return the max date from lake table"""
 
     def get_last_load_date(
         self, delta_date_columns: list = [], **kwargs
@@ -61,6 +61,20 @@ class LoadInterface(ABC):
         last_date = self._get_max_dates_from_lake(delta_date_columns, **kwargs)
 
         return last_date
+
+    @abstractmethod
+    def _add_load_date(self, data: dict):
+        """add loaded_at column"""
+
+    @abstractmethod
+    def _get_columns_and_types(self, data: dict):
+        """Get names and types for columns"""
+
+    @abstractmethod
+    def _treat_column_names(
+        self, data: dict, columns_to_drop: list, columns_to_rename: dict
+    ):
+        """Remove $oid, $date, ., $, space and diactrics from column names"""
 
     def __start_log(self):  # pylint: disable=unused-private-member
         """
