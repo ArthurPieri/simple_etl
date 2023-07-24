@@ -1,0 +1,41 @@
+[tool.poetry]
+name = "simple-etl"
+version = "0.1.0"
+description = "A simple tool to help etl processes"
+authors = ["arthurpieri <git@arthurpieri.com>"]
+license = "Apache v2"
+readme = "README.md"
+packages = [{include = "simple_etl"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.7.0"
+pylint = "^2.17.4"
+pre-commit = "^3.3.3"
+sqlfluff = "^2.1.3"
+
+[tool.pylint.messages_control]
+max-attributes=9
+disable = [
+  "bare-except",
+  "broad-except",
+  "missing-module-docstring",
+  "fixme",
+]
+
+[tool.pylint.BASIC]
+good-names= [
+  "df",
+  "db",
+  "dt",
+  "id",
+  "i",
+  "j",
+  "MockSnowflakeHook",
+]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
