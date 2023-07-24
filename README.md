@@ -10,9 +10,13 @@ For the basic example we will be using Snowflake as DataWarehouse.
   - Install Poetry 1.4.2
 
 - Run
-    '''poetry install'''
+    ```bash
+  poetry install
+    ```
 - Run
-    '''poetry run pre-commit install'''
+    ```bash
+  poetry run pre-commit install
+    ```
 - copy .env.example as .env into 'tests' folder and enter the correct value
 
 ## Folders and Arch definition
@@ -31,8 +35,8 @@ In order to create a pipeline, you should create a class that inherits both the 
 All classes are defined to provide simple methods and let the pipeline be something like:
 
 ```python
-    data = obj.extract
-    data = obj.transform
+    data = obj.extract()
+    data = obj.transform(data)
     obj.load(data)
 ```
 
