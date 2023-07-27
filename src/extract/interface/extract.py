@@ -11,7 +11,7 @@ class ExtractInterface(ABC):
     Makes all the treatments necessary to extract the data and return a Dict.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> object:
         self.__start_log()
 
         self._get_connection(**kwargs)

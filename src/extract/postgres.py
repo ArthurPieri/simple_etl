@@ -1,6 +1,4 @@
-# pylint: disable=import-error, no-name-in-module
-from abc import abstractmethod
-
+# pylint: disable=import-error, no-name-in-module, too-few-public-methods
 from psycopg2 import connect
 
 from airflow.hooks.base_hook import BaseHook
@@ -18,7 +16,7 @@ class FromPostgres(ExtractInterface):
         delta_date_columns: list = [],
         batch_size: int = 10000,
         **kwargs,
-    ):
+    ) -> list:
         """
         Extract data from postgres and return a dictionary
         Kwargs arguments:
@@ -45,16 +43,7 @@ class FromPostgres(ExtractInterface):
 
         return data
 
-    @abstractmethod
-    def get_last_load_date(
-        self, delta_date_columns: list = [], **kwargs
-    ):  # pylint: disable=dangerous-default-value
-        """
-        Get the last load date from the table
-        This is an abstract method, that should be implemented by the load class
-        """
-
-    def _get_connection(self, **kwargs):
+    def _get_connection(self, **kwargs) -> None:
         """
         Get connection to Postgres
         Kwargs arguments:
@@ -88,7 +77,7 @@ class FromPostgres(ExtractInterface):
         schema: str,
         table: str,
         delta_date_columns: list,
-    ):
+    ) -> str:
         sql_query = f"SELECT * FROM {schema}.{table}"
 
         if delta_date_columns:
@@ -98,9 +87,9 @@ class FromPostgres(ExtractInterface):
 
         return sql_query
 
-    def __generate_where_clause(self, select_statment: str, delta_date_columns: list):
-        last_date = self.get_last_load_date(delta_date_columns)
-
+    def __generate_where_clause(
+        self, select_statment: str, delta_date_columns: list, last_date=None
+    ) -> str:
         if not last_date:
             return select_statment
 
@@ -114,7 +103,7 @@ class FromPostgres(ExtractInterface):
 
         return select_statment
 
-    def _transform_to_dict(self, rows: list, columns: list):
+    def _transform_to_dict(self, rows: list, columns: list) -> list:
         data = []
 
         for row in rows:
