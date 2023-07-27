@@ -3,8 +3,6 @@ from abc import abstractmethod
 
 from psycopg2 import connect  # type: ignore
 
-from pandas import DataFrame
-
 from airflow.hooks.base_hook import BaseHook  # type: ignore
 
 from .interface.extract import ExtractInterface
@@ -12,7 +10,7 @@ from .interface.extract import ExtractInterface
 
 class FromPostgres(ExtractInterface):
     """
-    Extract data from Postgres and return a dataframe
+    Extract data from Postgres and return a dictionary
     """
 
     def extract(
@@ -22,7 +20,7 @@ class FromPostgres(ExtractInterface):
         **kwargs,
     ):
         """
-        Extract data from postgres and return a DataFrame
+        Extract data from postgres and return a dictionary
         Kwargs arguments:
         - schema
         - table
@@ -39,14 +37,13 @@ class FromPostgres(ExtractInterface):
             cursor.itersize = batch_size
             cursor.execute(select_query)
 
-            # get rows and transform to dataframe
             rows = cursor.fetchall()
             columns = [desc[0] for desc in cursor.description]
             self.log.info("Extracted %s rows from Postgres", len(rows))
 
-            df = DataFrame(rows, columns=columns)
+            data = self._transform_to_dict(rows, columns)
 
-        return df
+        return data
 
     @abstractmethod
     def get_last_load_date(
@@ -116,3 +113,11 @@ class FromPostgres(ExtractInterface):
         select_statment += where_clause
 
         return select_statment
+
+    def _transform_to_dict(self, rows: list, columns: list):
+        data = []
+
+        for row in rows:
+            data.append(dict(zip(columns, row)))
+
+        return data
