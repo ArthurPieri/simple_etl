@@ -14,7 +14,7 @@ class ExtractInterface(ABC):
     def __init__(self, **kwargs):
         self.__start_log()
 
-        self._get_connection(conn_name=kwargs["conn_name"], **kwargs)
+        self._get_connection(**kwargs)
 
     @abstractmethod
     def extract(
@@ -31,7 +31,7 @@ class ExtractInterface(ABC):
         """
 
     @abstractmethod
-    def _get_connection(self, conn_name: str) -> object:
+    def _get_connection(self, **kwargs) -> object:
         """
         Get connection from .env file or other source
         Parameters:
