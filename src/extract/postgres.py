@@ -1,9 +1,9 @@
 # pylint: disable=import-error, no-name-in-module
 from abc import abstractmethod
 
-from psycopg2 import connect  # type: ignore
+from psycopg2 import connect
 
-from airflow.hooks.base_hook import BaseHook  # type: ignore
+from airflow.hooks.base_hook import BaseHook
 
 from .interface.extract import ExtractInterface
 
@@ -13,9 +13,9 @@ class FromPostgres(ExtractInterface):
     Extract data from Postgres and return a dictionary
     """
 
-    def extract(
+    def extract(  # pylint: disable=dangerous-default-value
         self,
-        delta_date_columns: list,
+        delta_date_columns: list = [],
         batch_size: int = 10000,
         **kwargs,
     ):
@@ -26,7 +26,7 @@ class FromPostgres(ExtractInterface):
         - table
         """
         select_query = self._get_select_query(
-            schema=kwargs["schema"],  # type: ignore
+            schema=kwargs["schema"],
             table=kwargs["table"],
             delta_date_columns=delta_date_columns,
         )
@@ -83,11 +83,11 @@ class FromPostgres(ExtractInterface):
             host=host, port=port, user=user, password=password, database=database
         )
 
-    def _get_select_query(  # pylint: disable=dangerous-default-value
+    def _get_select_query(
         self,
         schema: str,
         table: str,
-        delta_date_columns: list = [],
+        delta_date_columns: list,
     ):
         sql_query = f"SELECT * FROM {schema}.{table}"
 

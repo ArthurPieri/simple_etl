@@ -24,11 +24,11 @@ class ExtractInterface(ABC):
         Extract data from source and return a dict
         """
 
-    @abstractmethod
-    def explore_db(self, database: str) -> list:
-        """
-        Get information about database
-        """
+    # @abstractmethod
+    # def explore_db(self, database: str) -> list:
+    #     """
+    #     Get information about database
+    #     """
 
     @abstractmethod
     def _get_connection(self, **kwargs) -> object:
