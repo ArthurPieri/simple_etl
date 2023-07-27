@@ -1,0 +1,3 @@
+CODEOWNERS @ArthurPieri
+src/extract/interface/extract.py @ArthurPieri
+src/load/interface/load.py @ArthurPieri
