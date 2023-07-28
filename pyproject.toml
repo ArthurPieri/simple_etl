@@ -41,6 +41,12 @@ good-names= [
   "MockSnowflakeHook",
 ]
 
+[tool.sqlfluff.core]
+dialect = "postgres"
+templater = "jinja"
+sql_file_exts = ".sql,.sql.j2,.dml,.ddl"
+max_line_length = 127
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
