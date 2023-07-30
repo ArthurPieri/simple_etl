@@ -11,10 +11,10 @@ class ExtractInterface(ABC):
     Makes all the treatments necessary to extract the data and return a Dict.
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs) -> object:
         self.__start_log()
 
-        self._get_connection(conn_name=kwargs["conn_name"], **kwargs)
+        self._get_connection(**kwargs)
 
     @abstractmethod
     def extract(
@@ -25,13 +25,7 @@ class ExtractInterface(ABC):
         """
 
     @abstractmethod
-    def explore_db(self, database: str) -> list:
-        """
-        Get information about database
-        """
-
-    @abstractmethod
-    def _get_connection(self, conn_name: str) -> object:
+    def _get_connection(self, **kwargs) -> object:
         """
         Get connection from .env file or other source
         Parameters:
