@@ -1,8 +1,6 @@
 # pylint: disable=import-error, no-name-in-module, too-few-public-methods
 from psycopg2 import connect
 
-from airflow.hooks.base_hook import BaseHook
-
 from .interface.extract import ExtractInterface
 
 
@@ -47,29 +45,18 @@ class FromPostgres(ExtractInterface):
         """
         Get connection to Postgres
         Kwargs arguments:
-        - conn_name: name of the connection in Airflow
         - host
         - port
         - user
         - password
         - database
         """
-        if kwargs["conn_name"]:
-            conn = BaseHook.get_connection(kwargs["conn_name"])
-            host = conn.host
-            port = conn.port
-            user = conn.login
-            password = conn.password
-            database = conn.database
-        else:
-            host = kwargs["host"]
-            port = kwargs["port"]
-            user = kwargs["user"]
-            password = kwargs["password"]
-            database = kwargs["database"]
-
         self.conn = connect(  # pylint: disable=attribute-defined-outside-init
-            host=host, port=port, user=user, password=password, database=database
+            host=kwargs["host"],
+            port=kwargs["port"],
+            user=kwargs["user"],
+            password=kwargs["password"],
+            database=kwargs["database"],
         )
 
     def _get_select_query(

@@ -1,5 +1,5 @@
 import unittest
-import psycopg2
+from src.extract.postgres import FromPostgres  # pylint: disable=import-error
 
 
 class TestExtractPostgres(unittest.TestCase):
@@ -7,23 +7,40 @@ class TestExtractPostgres(unittest.TestCase):
     Testing extract postgres class
     """
 
-    def test_db_connection(self):
+    def test_extract(self):
         """
-        Testing database connection
+        Test extract method
         """
         try:
-            conn = psycopg2.connect(
+            obj = FromPostgres(
                 host="localhost",
                 port="5432",
                 database="postgres_test",
                 user="postgres",
                 password="postgres",
             )
-            self.assertTrue(conn)
+            self.assertTrue(obj)
         except:
-            self.assertFalse(conn)
-        finally:
-            conn.close()
+            self.assertFalse(obj)
+
+        data = obj.extract(schema="public", table="employees")
+        self.assertTrue(data)
+        original_data = [
+            {
+                "id": 1,
+                "first_name": "John",
+                "last_name": "Doe",
+                "email": "john.doe@example.com",
+            },
+            {
+                "id": 2,
+                "first_name": "Jane",
+                "last_name": "Doe",
+                "email": "jane.doe@example.com",
+            },
+        ]
+        self.assertCountEqual(data, original_data)
+        obj.conn.close()
 
 
 if __name__ == "__main__":
