@@ -2,6 +2,9 @@
 
 from abc import ABC, abstractmethod
 from logging import getLogger, shutdown
+from datetime import datetime
+
+from pytz import timezone
 
 
 class LoadInterface(ABC):
@@ -23,7 +26,7 @@ class LoadInterface(ABC):
     @abstractmethod
     def load(  # pylint: disable=dangerous-default-value
         self,
-        data: dict,
+        data: list[dict],
         merge_ids: list,
         columns_to_drop: list = [],
         columns_to_rename: dict = {},
@@ -33,7 +36,7 @@ class LoadInterface(ABC):
         """
 
     @abstractmethod
-    def _get_connection(self, conn_name: str, **kwargs):
+    def _get_connection(self, **kwargs):
         """
         Get connection from Airflow or from .env file
         Parameters:
@@ -62,19 +65,73 @@ class LoadInterface(ABC):
 
         return last_date
 
-    @abstractmethod
-    def _add_load_date(self, data: dict):
-        """add loaded_at column"""
+    def _add_loaddate(self, data: list[dict]) -> list:
+        """
+        Add a loaddate column to the data.
+        """
+        for row in data:
+            row["loaddate"] = datetime.now(timezone("UTC"))
+
+        return data
 
     @abstractmethod
     def _get_columns_and_types(self, data: dict):
         """Get names and types for columns"""
 
-    @abstractmethod
-    def _treat_column_names(
-        self, data: dict, columns_to_drop: list, columns_to_rename: dict
-    ):
+    def _treat_columns(
+        self, data: list[dict], columns_to_drop: list, columns_to_rename
+    ) -> list:
+        if columns_to_drop:
+            data = self.__drop_columns(data, columns_to_drop)
+
+        if columns_to_rename:
+            data = self.__rename_columns(data, columns_to_rename)
+
+        data = self.__treat_column_names(data)
+
+        return data
+
+    def __treat_column_names(self, data: list[dict]) -> list[dict]:
         """Remove $oid, $date, ., $, space and diactrics from column names"""
+        columns = self.__get_columns(data)
+        for col in columns:
+            if ".$oid" in col:
+                ...
+        return data
+
+    def __get_columns(self, data: list[dict]) -> list:
+        """
+        Get columns from data.
+        """
+        columns = []
+        for row in data:
+            for column in row:
+                if column not in columns:
+                    columns.append(column)
+
+        return columns
+
+    def __drop_columns(self, data: list[dict], columns_to_drop: list) -> list[dict]:
+        """
+        Drop columns from data.
+        """
+        for row in data:
+            for column in columns_to_drop:
+                if column in row:
+                    del row[column]
+
+        return data
+
+    def __rename_columns(self, data: list[dict], columns_to_rename: dict) -> list[dict]:
+        """
+        Rename columns from data.
+        """
+        for row in data:
+            for column in columns_to_rename:
+                if column in row:
+                    row[columns_to_rename[column]] = row[column]
+                    del row[column]
+        return data
 
     def __start_log(self):  # pylint: disable=unused-private-member
         """

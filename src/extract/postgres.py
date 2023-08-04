@@ -41,6 +41,7 @@ class FromPostgres(ExtractInterface):
 
         return data
 
+    # pylint: disable=duplicate-code
     def _get_connection(self, **kwargs) -> None:
         """
         Get connection to Postgres
