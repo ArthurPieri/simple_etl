@@ -1,5 +1,7 @@
 import unittest
-from src.extract.postgres import FromPostgres  # pylint: disable=import-error
+from ..src.extract.postgres import FromPostgres  # pylint: disable=import-error
+
+# import pytest
 
 
 class TestExtractPostgres(unittest.TestCase):
