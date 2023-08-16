@@ -3,7 +3,7 @@ name: Code quality
 on:
     pull_request:
         branches: [main]
-        types: [synchronize, ready_for_review]
+        types: [synchronize]
 
 env:
     PYTHON_VERSION: 3.11.4
