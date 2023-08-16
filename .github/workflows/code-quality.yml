@@ -69,4 +69,9 @@ jobs:
               if: steps.changed-files.outputs.any_changed == 'true'
               run: |
                 poetry run pylint ./src
+
+            - name: pytest
+              if: steps.changed-files.outputs.any_changed == 'true'
+              run: |
+                poetry run pytest ./tests
                     
