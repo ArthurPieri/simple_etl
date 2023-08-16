@@ -5,7 +5,6 @@ description = "A simple tool to help etl processes"
 authors = ["arthurpieri <git@arthurpieri.com>"]
 license = "Apache v2"
 readme = "README.md"
-packages = [{include = "simple_etl"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
