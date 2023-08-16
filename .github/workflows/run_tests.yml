@@ -10,7 +10,7 @@ env:
     POETRY_VERSION: 1.5.1
 
 jobs:
-    format:
+    run_pytest:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
@@ -50,7 +50,7 @@ jobs:
               run: poetry install --without code_quality
         
             - name: Setup docker-compose up -d
-              run: docker-compose up -d
+              run: cd ./tests && docker-compose up -d
 
             - name: pytest
               if: steps.changed-files.outputs.any_changed == 'true'

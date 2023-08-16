@@ -10,7 +10,7 @@ env:
     POETRY_VERSION: 1.5.1
 
 jobs:
-    format:
+    code_quality:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout
