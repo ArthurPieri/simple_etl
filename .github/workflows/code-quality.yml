@@ -1,0 +1,72 @@
+name: Code quality
+
+on:
+    pull_request:
+        branches: [main]
+        types: [synchronize]
+
+env:
+    PYTHON_VERSION: 3.11.4
+    POETRY_VERSION: 1.5.1
+
+jobs:
+    code_quality:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v3
+              with:
+                  fetch-depth: 0
+
+            - name: Get changed Python files
+              id: changed-files
+              uses: tj-actions/changed-files@v37.6.1
+              with:
+                files: '**/*.py'
+            
+            - name: Install python
+              if: steps.changed-files.outputs.any_changed == 'true'
+              uses: actions/setup-python@v4.7.0
+              with:
+                  python-version: ${{ env.PYTHON_VERSION }}
+
+            - name: Load cached Poetry installation
+              if: steps.changed-files.outputs.any_changed == 'true'
+              id: cached-poetry-install
+              uses: actions/cache@v3.3.1
+              with:
+                path: ~/.local
+                key: poetry-${{ env.POETRY_VERSION }}-${{ hashFiles('**/poetry.lock') }}
+
+            - name: Install Poetry
+              if: steps.changed-files.outputs.any_changed == 'true'
+              uses: snok/install-poetry@v1.3.4
+              with:
+                version: ${{ env.POETRY_VERSION }}
+                virtualenvs-create: true
+                virtualenvs-in-project: true
+                installer-parallel: true
+
+            - name: Load cached venv
+              id: cached-poetry-dependecies
+              uses: actions/cache@v3.3.1
+              with:
+                path: .venv
+                key: .venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+
+            - name: Install code quality dependencies
+              if: steps.changed-files.outputs.any_changed == 'true' && steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+              run: poetry install --only code_quality
+        
+            - name: Code format
+              if: steps.changed-files.outputs.any_changed == 'true'
+              run: |
+                poetry run black \
+                ${{ steps.changed-files.outputs.all_changed_files }} \
+                --check --skip-string-normalization
+        
+            - name: Lint
+              if: steps.changed-files.outputs.any_changed == 'true'
+              run: |
+                poetry run pylint ./src
+                    
