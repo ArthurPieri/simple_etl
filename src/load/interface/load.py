@@ -17,7 +17,6 @@ class LoadInterface(ABC):
     # Class is organized in this order:
     # 1. Abstract methods that should be implemented or overridable methods
     # 2. Non-abstract methods
-    @abstractmethod
     def __init__(self, **kwargs):
         self.__start_log()
 
@@ -30,23 +29,11 @@ class LoadInterface(ABC):
         merge_ids: list,
         columns_to_drop: list = [],
         columns_to_rename: dict = {},
-    ):
+        **kwargs,
+    ) -> None:
         """
         Treat the DataFrame column names and types and load data to Lake
         """
-
-    @abstractmethod
-    def _get_connection(self, **kwargs):
-        """
-        Get connection from Airflow or from .env file
-        Parameters:
-        - **Kwargs parameters are used to get connection
-        - kwargs['conn_name']: name of the connection
-        """
-
-    @abstractmethod
-    def _get_max_dates_from_lake(self, delta_date_columns, **kwargs):
-        """This method should return the max date from lake table"""
 
     def get_last_load_date(
         self, delta_date_columns: list = [], **kwargs
@@ -61,55 +48,71 @@ class LoadInterface(ABC):
             self.log.error("delta_date_columns cannot be empty")
             raise ValueError("delta_date_columns cannot be empty")
 
-        last_date = self._get_max_dates_from_lake(delta_date_columns, **kwargs)
+        last_date = self._get_max_dates_from_table(delta_date_columns, **kwargs)
 
         return last_date
+
+    @abstractmethod
+    def _add_columns_to_table(self, columns_types: dict, **kwargs):
+        """
+        Add columns to table
+        """
+
+    @abstractmethod
+    def _create_empty_table(self, columns_types: dict, **kwargs):
+        """
+        Create empty table on lake
+        """
+
+    @abstractmethod
+    def _get_connection(self, **kwargs):
+        """
+        Parameters:
+        - **Kwargs parameters are used to get connection
+        """
+
+    @abstractmethod
+    def _get_max_dates_from_table(self, delta_date_columns, **kwargs):
+        """This method should return the max date from lake table"""
 
     def _add_loaddate(self, data: list[dict]) -> list:
         """
         Add a loaddate column to the data.
         """
+        loaddate = datetime.now(timezone("UTC"))
         for row in data:
-            row["loaddate"] = datetime.now(timezone("UTC"))
+            row["loaddate"] = loaddate
 
         return data
 
-    @abstractmethod
-    def _get_columns_and_types(self, data: dict):
-        """Get names and types for columns"""
+    def _get_python_types(self, columns: set, data: list[dict]):
+        """Get types for columns"""
+        cols_and_types = {}
+        for col in columns:
+            types = set()
+            for dictionary in data:
+                if col in dictionary.keys():
+                    types.add(type(dictionary[col]))
+            cols_and_types[col] = types
+        return cols_and_types
+
+    def _load_data(
+        self, columns_and_types: dict, data: list[dict], merge_ids: list, **kwargs
+    ):
+        """Load data to target"""
 
     def _treat_columns(
         self, data: list[dict], columns_to_drop: list, columns_to_rename
-    ) -> list:
+    ) -> [set, list]:
         if columns_to_drop:
             data = self.__drop_columns(data, columns_to_drop)
 
         if columns_to_rename:
             data = self.__rename_columns(data, columns_to_rename)
 
-        data = self.__treat_column_names(data)
+        columns, data = self.__treat_column_names(data)
 
-        return data
-
-    def __treat_column_names(self, data: list[dict]) -> list[dict]:
-        """Remove $oid, $date, ., $, space and diactrics from column names"""
-        columns = self.__get_columns(data)
-        for col in columns:
-            if ".$oid" in col:
-                ...
-        return data
-
-    def __get_columns(self, data: list[dict]) -> list:
-        """
-        Get columns from data.
-        """
-        columns = []
-        for row in data:
-            for column in row:
-                if column not in columns:
-                    columns.append(column)
-
-        return columns
+        return columns, data
 
     def __drop_columns(self, data: list[dict], columns_to_drop: list) -> list[dict]:
         """
@@ -122,6 +125,17 @@ class LoadInterface(ABC):
 
         return data
 
+    def __get_columns(self, data: list[dict]) -> set:
+        """
+        Get columns from data.
+        """
+        columns = set()
+        for dictionary in data:
+            for key in dictionary.keys():
+                columns.add(key)
+
+        return columns
+
     def __rename_columns(self, data: list[dict], columns_to_rename: dict) -> list[dict]:
         """
         Rename columns from data.
@@ -132,6 +146,14 @@ class LoadInterface(ABC):
                     row[columns_to_rename[column]] = row[column]
                     del row[column]
         return data
+
+    def __treat_column_names(self, data: list[dict]) -> [set, list[dict]]:
+        """Remove $oid, $date, ., $, space and diactrics from column names"""
+        columns = self.__get_columns(data)
+        for col in columns:
+            if ".$oid" in col:
+                ...
+        return columns, data
 
     def __start_log(self):  # pylint: disable=unused-private-member
         """
