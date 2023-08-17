@@ -1,3 +1,4 @@
+# pylint: disable=missing-module-docstring, missing-function-docstring
 from ..src.extract.extract_postgres import FromPostgres  # pylint: disable=import-error
 from .postgres.fixture_postgres import (  # pylint: disable=unused-import
     fixture_extracted_data,
@@ -39,3 +40,15 @@ class TestExtractPostgres:  # pylint: disable=too-few-public-methods
         obj.conn.close()
 
         assert obj.conn.closed
+
+    def test_get_connection(self):
+        ...
+
+    def test_get_select_query(self):
+        ...
+
+    def test__generate_where_clause(self):
+        ...
+
+    def test_transform_to_dict(self):
+        ...

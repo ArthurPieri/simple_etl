@@ -75,6 +75,12 @@ class LoadInterface(ABC):
     def _get_max_dates_from_table(self, delta_date_columns, **kwargs):
         """This method should return the max date from lake table"""
 
+    @abstractmethod
+    def _load_data(
+        self, columns_and_types: dict, data: list[dict], merge_ids: list, **kwargs
+    ):
+        """Load data to target"""
+
     def _add_loaddate(self, data: list[dict]) -> list:
         """
         Add a loaddate column to the data.
@@ -95,11 +101,6 @@ class LoadInterface(ABC):
                     types.add(type(dictionary[col]))
             cols_and_types[col] = types
         return cols_and_types
-
-    def _load_data(
-        self, columns_and_types: dict, data: list[dict], merge_ids: list, **kwargs
-    ):
-        """Load data to target"""
 
     def _treat_columns(
         self, data: list[dict], columns_to_drop: list, columns_to_rename
