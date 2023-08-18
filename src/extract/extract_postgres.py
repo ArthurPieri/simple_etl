@@ -1,7 +1,7 @@
 # pylint: disable=import-error, no-name-in-module, too-few-public-methods
 from psycopg2 import connect
 
-from .interface.extract import ExtractInterface
+from .interface.extract_interface import ExtractInterface
 
 
 class FromPostgres(ExtractInterface):

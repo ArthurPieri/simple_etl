@@ -6,7 +6,7 @@ Makes all the treatment necessary and then loads the data into the specified tab
 
 from psycopg2 import connect
 
-from .interface.load import LoadInterface
+from .interface.load_interface import LoadInterface
 
 
 class ToPostgres(LoadInterface):
