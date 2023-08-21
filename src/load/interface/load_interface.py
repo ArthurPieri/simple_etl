@@ -20,9 +20,12 @@ class LoadInterface(ABC):
     # 1. Abstract methods that should be implemented or overridable methods
     # 2. Non-abstract methods
     def __init__(self, **kwargs):
+        """
+        In the child class you should define what parameters to be used to get connection
+        """
         self.__start_log()
 
-        self._get_connection(conn_name=kwargs["conn_name"], **kwargs)
+        self._get_connection(**kwargs)
 
     @abstractmethod
     def load(  # pylint: disable=dangerous-default-value
@@ -108,16 +111,16 @@ class LoadInterface(ABC):
         self, data: list[dict], columns_to_drop: list, columns_to_rename
     ) -> [set, list]:
         if columns_to_drop:
-            data = self.__drop_columns(data, columns_to_drop)
+            data = self._drop_columns(data, columns_to_drop)
 
         if columns_to_rename:
-            data = self.__rename_columns(data, columns_to_rename)
+            data = self._rename_columns(data, columns_to_rename)
 
-        columns, data = self.__treat_column_names(data)
+        columns, data = self._treat_column_names(data)
 
         return columns, data
 
-    def __drop_columns(self, data: list[dict], columns_to_drop: list) -> list[dict]:
+    def _drop_columns(self, data: list[dict], columns_to_drop: list) -> list[dict]:
         """
         Drop columns from data.
         """
@@ -128,7 +131,7 @@ class LoadInterface(ABC):
 
         return data
 
-    def __get_columns(self, data: list[dict]) -> set:
+    def _get_columns(self, data: list[dict]) -> set:
         """
         Get columns from data.
         """
@@ -139,7 +142,7 @@ class LoadInterface(ABC):
 
         return columns
 
-    def __rename_columns(self, data: list[dict], columns_to_rename: dict) -> list[dict]:
+    def _rename_columns(self, data: list[dict], columns_to_rename: dict) -> list[dict]:
         """
         Rename columns from data.
         Parameters:
@@ -151,40 +154,52 @@ class LoadInterface(ABC):
                 if old_col in row:
                     row[new_col] = row[old_col]
                     row.pop(old_col)
-
         return data
 
-    def __treat_column_names(self, data: list[dict]) -> [set, list[dict]]:
+    def _treat_column_names(self, data: list[dict]) -> [set, list[dict]]:
         """Remove $oid, $date, ., $, space and diactrics from column names"""
-        columns = self.__get_columns(data)
+        columns = self._get_columns(data)
         columns_to_rename = {}
 
         for col in columns:
             if ".$oid" in col:
                 self.log.info("Remove .$oid from column: %s", col)
-                new_col = col.replace(".$oid", "")
+                if "id" not in col.replace(".$oid", ""):
+                    columns_to_rename[col] = col.replace(".$oid", "_id")
+                    col = col.replace(".$oid", "_id")
+                else:
+                    columns_to_rename[col] = col.replace(".$oid", "")
+                    col = col.replace(".$oid", "")
             if ".$date" in col:
                 self.log.info("Remove .$date from column: %s", col)
-                new_col = col.replace(".$date", "")
+                if "date" not in col.replace(".$date", ""):
+                    columns_to_rename[col] = col.replace(".$date", "_date")
+                    col = col.replace(".$date", "_date")
+                else:
+                    columns_to_rename[col] = col.replace(".$date", "")
+                    col = col.replace(".$date", "")
             if "." in col:
                 self.log.info("Replace . to _ in column: %s", col)
-                new_col = col.replace(".", "_")
+                columns_to_rename[col] = col.replace(".", "_")
+                col = col.replace(".", "_")
             if "$" in col:
                 self.log.info("Remove $ from column: %s", col)
-                new_col = col.replace("$", "")
+                columns_to_rename[col] = col.replace("$", "")
+                col = col.replace("$", "")
             if " " in col:
                 self.log.info("Replace space to _ in column: %s", col)
-                new_col = col.replace(" ", "_")
+                columns_to_rename[col] = col.replace(" ", "_")
+                col = col.replace(" ", "_")
             if not col.isascii():
                 self.log.info("Remove diactrics from column: %s", col)
-                new_col = unidecode.unidecode(col).replace(" ", "_")
-            columns_to_rename[col] = new_col
+                columns_to_rename[col] = unidecode.unidecode(col).replace(" ", "_")
+                col = unidecode.unidecode(col).replace(" ", "_")
 
         self.log.info("Columns to rename: %s", columns_to_rename)
 
-        data = self.__rename_columns(data, columns_to_rename)
+        data = self._rename_columns(data, columns_to_rename)
 
-        columns = self.__get_columns(data)
+        columns = self._get_columns(data)
 
         return columns, data
 
