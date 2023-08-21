@@ -6,6 +6,8 @@ from datetime import datetime
 
 from pytz import timezone
 
+import unidecode
+
 
 class LoadInterface(ABC):
     """
@@ -140,20 +142,50 @@ class LoadInterface(ABC):
     def __rename_columns(self, data: list[dict], columns_to_rename: dict) -> list[dict]:
         """
         Rename columns from data.
+        Parameters:
+        - data: list of dictionaries
+        - columns_to_rename: dictionary with old column name as key and new column name as value
         """
         for row in data:
-            for column in columns_to_rename:
-                if column in row:
-                    row[columns_to_rename[column]] = row[column]
-                    del row[column]
+            for old_col, new_col in columns_to_rename.items():
+                if old_col in row:
+                    row[new_col] = row[old_col]
+                    row.pop(old_col)
+
         return data
 
     def __treat_column_names(self, data: list[dict]) -> [set, list[dict]]:
         """Remove $oid, $date, ., $, space and diactrics from column names"""
         columns = self.__get_columns(data)
+        columns_to_rename = {}
+
         for col in columns:
             if ".$oid" in col:
-                ...
+                self.log.info("Remove .$oid from column: %s", col)
+                new_col = col.replace(".$oid", "")
+            if ".$date" in col:
+                self.log.info("Remove .$date from column: %s", col)
+                new_col = col.replace(".$date", "")
+            if "." in col:
+                self.log.info("Replace . to _ in column: %s", col)
+                new_col = col.replace(".", "_")
+            if "$" in col:
+                self.log.info("Remove $ from column: %s", col)
+                new_col = col.replace("$", "")
+            if " " in col:
+                self.log.info("Replace space to _ in column: %s", col)
+                new_col = col.replace(" ", "_")
+            if not col.isascii():
+                self.log.info("Remove diactrics from column: %s", col)
+                new_col = unidecode.unidecode(col).replace(" ", "_")
+            columns_to_rename[col] = new_col
+
+        self.log.info("Columns to rename: %s", columns_to_rename)
+
+        data = self.__rename_columns(data, columns_to_rename)
+
+        columns = self.__get_columns(data)
+
         return columns, data
 
     def __start_log(self):  # pylint: disable=unused-private-member

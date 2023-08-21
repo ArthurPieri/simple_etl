@@ -1,4 +1,4 @@
-# pylint: disable=missing-module-docstring, missing-function-docstring
+# pylint: disable=missing-module-docstring, missing-function-docstring, too-few-public-methods
 # from ..src.load.load_postgres import ToPostgres  # pylint: disable=import-error
 
 from .postgres.fixture_postgres import (  # pylint: disable=unused-import
@@ -16,20 +16,16 @@ class TestToPostgres:
     ) -> None:
         ...
 
-    def test_add_columns_to_table(self):
-        ...
+        # test load
 
-    def test_create_empty_table(self):
-        ...
+        # test_add_columns_to_table
 
-    def test_get_connection(self):
-        ...
+        # test_create_empty_table
 
-    def test_get_max_dates_from_table(self):
-        ...
+        # test_get_connection
 
-    def test_get_postgres_columns(self):
-        ...
+        # test_get_max_dates_from_table
 
-    def test_load_data(self):
-        ...
+        # test_get_postgres_columns
+
+        # test_load_data
