@@ -37,3 +37,17 @@ def fixture_postgres_connection():
         "user": "postgres",
         "password": "postgres",
     }
+
+
+@pytest.fixture
+def fixture_rows_columns():
+    """
+    Rows and columns to test
+    """
+    return {
+        "rows": [
+            (1, "John", "Doe", "john.doe@example.com"),
+            (2, "Jane", "Doe", "jane.doe@example.com"),
+        ],
+        "columns": ["id", "first_name", "last_name", "email"],
+    }
