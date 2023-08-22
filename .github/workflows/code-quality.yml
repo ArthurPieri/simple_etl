@@ -1,9 +1,10 @@
 name: Code quality
 
 on:
-    pull_request:
-        branches: [main]
-        types: [synchronize]
+  pull_request:
+    types: [auto_merge_enabled, opened, edited, closed, ready_for_review, synchronize]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
 
 env:
     PYTHON_VERSION: 3.11.4
