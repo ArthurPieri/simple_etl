@@ -26,8 +26,17 @@ class TestToPostgres:
     Makes all the necessary treatments to load data into postgres.
     """
 
-    # def test_load_postgres(self, fixture_extracted_data) -> None:
-    #     ...
+    def test_load_postgres(self, fixture_load_data, obj) -> None:
+        success = obj.load(
+            data=fixture_load_data,
+            merge_ids=["id"],
+            columns_to_drop=[],
+            columns_to_rename={},
+            database="postgres_test",
+            schema="public",
+            table="employees_test_load",
+        )
+        assert success
 
     def test_connection_and_log(self, obj):
         assert obj.conn
@@ -156,6 +165,46 @@ class TestToPostgres:
             table="employees_test_load",
         )
         assert success
+
+    def test_get_add_columns_sql(self, obj):
+        sql = obj._get_add_columns_sql(
+            columns_types={"update_date": datetime},
+            database="postgres_test",
+            schema="public",
+            table="employees_test_load",
+        )
+        assert sql
+
+    def test_get_create_table_sql(self, obj):
+        sql = obj._get_create_table_sql(
+            columns_types={
+                "id": int,
+                "first_name": str,
+                "last_name": str,
+                "email": str,
+            },
+            database="postgres_test",
+            schema="public",
+            table="employees_test_load",
+            is_temp=False,
+            primary_key="id",
+        )
+        assert sql
+
+    def test_get_insert_sql(self, obj):
+        sql = obj._get_insert_sql(
+            columns_and_types={
+                "id": int,
+                "first_name": str,
+                "last_name": str,
+                "email": str,
+            },
+            database="postgres_test",
+            schema="public",
+            table="employees_test_load",
+            merge_ids=["id"],
+        )
+        assert sql
 
     def test_load_data(self, obj, fixture_load_data):
         cursor = obj.conn.cursor()

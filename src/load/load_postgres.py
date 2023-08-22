@@ -43,7 +43,7 @@ class ToPostgres(LoadInterface):
         )
 
         data_columns_types = self._get_python_types(columns, data)
-        table_columns = self._get_postgres_columns()
+        table_columns = self._get_postgres_columns(**kwargs)
 
         if not table_columns:
             self.log.info(
@@ -69,15 +69,18 @@ class ToPostgres(LoadInterface):
                 self._add_columns_to_table(columns_types=diff, **kwargs)
 
         self._load_data(
-            columns_types=data_columns_types, data=data, merge_ids=merge_ids, **kwargs
+            columns_and_types=data_columns_types,
+            data=data,
+            merge_ids=merge_ids,
+            **kwargs,
         )
+        return True
 
     def _add_columns_to_table(self, columns_types: dict, **kwargs) -> bool:
         cursor = self.conn.cursor()
         self.log.info(
             "Adding columns to table %s.%s", kwargs["schema"], kwargs["table"]
         )
-        columns_types = self._get_postgres_types(columns_types)
         alter_table_sql = self._get_add_columns_sql(
             columns_types=columns_types, **kwargs
         )
@@ -98,6 +101,9 @@ class ToPostgres(LoadInterface):
     def _get_add_columns_sql(self, columns_types: dict, **kwargs) -> str:
         table_name = f'{kwargs["schema"]}.{kwargs["table"]}'
         sql = f"ALTER TABLE {table_name} ADD COLUMN "
+        print("Columns types ", columns_types)
+        columns_types = self._get_postgres_types(columns_types)
+        print(columns_types)
 
         for col, col_type in columns_types.items():
             sql += f"{col} {col_type}, "
@@ -226,7 +232,9 @@ class ToPostgres(LoadInterface):
         return last_date
 
     def _get_postgres_types(self, columns_and_types: dict) -> dict:
+        print("Columns and types inside function ", columns_and_types)
         for name, _type in columns_and_types.items():
+            print("Type", _type)
             _type = _type.__name__
             if _type == "str":
                 columns_and_types[name] = "varchar(255)"
