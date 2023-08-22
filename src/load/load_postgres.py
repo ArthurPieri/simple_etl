@@ -3,10 +3,15 @@ This class is used to load data into a postgres database.
 It recieves a dataframe, a schema name, a table name, and a connection string.
 Makes all the treatment necessary and then loads the data into the specified table.
 """
+import re
 
 from psycopg2 import connect
 
-from .interface.load_interface import LoadInterface
+from pytz import timezone
+
+from .interface.load_interface import (  # pylint: disable=import-error, no-name-in-module
+    LoadInterface,
+)
 
 
 class ToPostgres(LoadInterface):
@@ -67,11 +72,88 @@ class ToPostgres(LoadInterface):
             columns_types=data_columns_types, data=data, merge_ids=merge_ids, **kwargs
         )
 
-    def _add_columns_to_table(self, columns_types: dict, **kwargs):
-        ...
+    def _add_columns_to_table(self, columns_types: dict, **kwargs) -> bool:
+        cursor = self.conn.cursor()
+        self.log.info(
+            "Adding columns to table %s.%s", kwargs["schema"], kwargs["table"]
+        )
+        columns_types = self._get_postgres_types(columns_types)
+        alter_table_sql = self._get_add_columns_sql(
+            columns_types=columns_types, **kwargs
+        )
+        try:
+            cursor.execute(alter_table_sql)
+            self.conn.commit()
+            return True
+        except Exception as error:
+            self.log.error(
+                "Error adding columns to table %s.%s", kwargs["schema"], kwargs["table"]
+            )
+            self.log.error(error)
+            self.conn.rollback()
+            raise error
+        finally:
+            cursor.close()
 
-    def _create_empty_table(self, columns_types: dict, **kwargs):
-        ...
+    def _get_add_columns_sql(self, columns_types: dict, **kwargs) -> str:
+        table_name = f'{kwargs["schema"]}.{kwargs["table"]}'
+        sql = f"ALTER TABLE {table_name} ADD COLUMN "
+
+        for col, col_type in columns_types.items():
+            sql += f"{col} {col_type}, "
+
+        sql = sql[:-2]
+        self.log.info("SQL statement: %s", sql)
+
+        return sql
+
+    def _create_empty_table(self, columns_types: dict, **kwargs) -> bool:
+        cursor = self.conn.cursor()
+        self.log.info("Creating table %s.%s", kwargs["schema"], kwargs["table"])
+        create_table_sql = self._get_create_table_sql(
+            columns_types=columns_types, is_temp=False, primary_key="id", **kwargs
+        )
+        try:
+            cursor.execute(create_table_sql)
+            self.conn.commit()
+            return True
+        except Exception as error:  # pylint: disable=broad-except
+            self.log.error(
+                "Error creating table %s.%s", kwargs["schema"], kwargs["table"]
+            )
+            self.log.error(error)
+            self.conn.rollback()
+            raise error
+        finally:
+            cursor.close()
+
+    def _get_create_table_sql(
+        self, columns_types: dict, is_temp: bool, primary_key: str, **kwargs
+    ) -> str:
+        table_name = f'{kwargs["schema"]}.{kwargs["table"]}'
+
+        columns_types = self._get_postgres_types(columns_types)
+
+        if is_temp:
+            table_name += "_temp"
+
+        sql = f"CREATE TABLE {table_name} ("
+
+        for col, col_type in columns_types.items():
+            if col == primary_key:
+                sql += f"{col} {col_type} PRIMARY KEY,"
+            else:
+                sql += f"{col} {col_type},"
+
+        sql = sql[:-1] + ")"
+        match = re.sub(r"\(\s?\)", "", sql)
+
+        if match != sql:
+            self.log.error("Empty parentheses in SQL statement")
+            raise ValueError("Empty parentheses in SQL statement")
+        self.log.info("SQL statement: %s", sql)
+
+        return sql
 
     # pylint: disable=duplicate-code
     def _get_connection(self, **kwargs) -> None:
@@ -92,8 +174,75 @@ class ToPostgres(LoadInterface):
             database=kwargs["database"],
         )
 
-    def _get_max_dates_from_table(self, delta_date_columns, **kwargs):
-        ...
+    def _get_max_dates_from_table(self, delta_date_columns: list, **kwargs):
+        cursor = self.conn.cursor()
+        dates_list = []
+        try:
+            for date_column in delta_date_columns:
+                dates_list.append(self._get_max_date(date_column, **kwargs))
+
+            if None in dates_list:
+                dates_list.remove(None)
+
+            if len(dates_list) == 0:
+                self.log.info("No dates found")
+                return None
+
+            last_date = max(dates_list)
+            self.log.info("Last date found: %s", last_date)
+        except Exception as exc:
+            self.log.error("Error getting max date from Postgres: %s", exc)
+            raise exc
+        finally:
+            cursor.close()
+
+        return last_date
+
+    def _get_max_date(self, date_column: str, **kwargs):
+        """
+        Get max date from Postgres table
+        """
+        cursor = self.conn.cursor()
+        sql = f"""
+            SELECT MAX({date_column}) FROM {kwargs['schema']}.{kwargs['table']}
+        """
+
+        try:
+            cursor.execute(sql)
+            max_date = cursor.fetchone()  # type: ignore
+            print(max_date)
+        except Exception as exc:
+            self.log.error("Error while executing SQL statement: %s", exc)
+            return None
+
+        last_date = max_date[0]
+        print("last date = ", last_date)
+
+        if last_date:
+            self.log.info("Last date in table: %s", last_date)
+            last_date = last_date.replace(tzinfo=timezone("UTC"))
+
+        cursor.close()
+        return last_date
+
+    def _get_postgres_types(self, columns_and_types: dict) -> dict:
+        for name, _type in columns_and_types.items():
+            _type = _type.__name__
+            if _type == "str":
+                columns_and_types[name] = "varchar(255)"
+            elif _type == "int":
+                columns_and_types[name] = "integer"
+            elif _type == "float":
+                columns_and_types[name] = "float"
+            elif _type == "bool":
+                columns_and_types[name] = "boolean"
+            elif _type in ("dict", "list"):
+                columns_and_types[name] = "variant"
+            elif _type == "datetime":
+                columns_and_types[name] = "timestamp"
+            else:
+                columns_and_types[name] = "varchar(255)"
+        return columns_and_types
 
     def _get_postgres_columns(self, **kwargs) -> list:
         columns = []
@@ -107,6 +256,7 @@ class ToPostgres(LoadInterface):
                 """
             )
             columns = cursor.fetchall()
+            columns = [column[0] for column in columns]
         return columns
 
     def _load_data(

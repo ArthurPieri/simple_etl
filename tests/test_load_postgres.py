@@ -1,5 +1,6 @@
 # pylint: disable=missing-module-docstring, missing-function-docstring, too-few-public-methods. redefined-outer-name, protected-access, unused-import
 from datetime import datetime
+from pytz import timezone
 import pytest
 from .postgres.fixture_postgres import (
     fixture_extracted_data,
@@ -24,7 +25,7 @@ class TestToPostgres:
     Makes all the necessary treatments to load data into postgres.
     """
 
-    # def test_load(self, fixture_extracted_data) -> None:
+    # def test_load_postgres(self, fixture_extracted_data) -> None:
     #     ...
 
     def test_connection_and_log(self, obj):
@@ -45,11 +46,11 @@ class TestToPostgres:
             columns=["id", "first_name", "last_name", "email", "loaddate"],
             data=data,
         )
-        assert cols_and_types["id"] == {int}
-        assert cols_and_types["first_name"] == {str}
-        assert cols_and_types["last_name"] == {str}
-        assert cols_and_types["email"] == {str}
-        assert cols_and_types["loaddate"] == {datetime}
+        assert cols_and_types["id"][0].__name__ == "int"
+        assert cols_and_types["first_name"][0].__name__ == "str"
+        assert cols_and_types["last_name"][0].__name__ == "str"
+        assert cols_and_types["email"][0].__name__ == "str"
+        assert cols_and_types["loaddate"][0].__name__ == "datetime"
 
     def test_treat_columns(self, obj, fixture_extracted_data):
         data = fixture_extracted_data
@@ -94,17 +95,56 @@ class TestToPostgres:
         columns, data = obj._treat_column_names(data=data)
         assert columns == {"id", "last_name", "email", "first_name", "create_date"}
 
-    # def test_add_columns_to_table(self, obj):
-    #     ...
+    def test_get_postgres_columns(self, obj):
+        columns = obj._get_postgres_columns(schema="public", table="employees")
+        assert columns == ["id", "first_name", "last_name", "email"]
 
-    # def test_create_empty_table(self, obj):
-    #     ...
+    def test_create_empty_table(self, obj):
+        cursor = obj.conn.cursor()
+        cursor.execute("DROP TABLE IF EXISTS public.employees_load")
+        cursor.close()
 
-    # def test_get_max_dates_from_table(self, obj):
-    #     ...
+        success = obj._create_empty_table(
+            columns_types={
+                "id": int,
+                "first_name": str,
+                "last_name": str,
+                "email": str,
+            },
+            database="postgres_test",
+            schema="public",
+            table="employees_load",
+        )
+        assert success
 
-    # def test_get_postgres_columns(self, obj):
-    #     ...
+    def get_last_load_date(self, obj):
+        last_date = obj._get_last_load_date(
+            delta_date_columns=["loaddate"],
+            database="postgres_test",
+            schema="public",
+            table="employees_test_load",
+        )
+        assert last_date
+        assert last_date == datetime(2023, 8, 22, 0, 0, tzinfo=timezone("UTC"))
+
+    def test_get_max_dates_from_table(self, obj):
+        max_dates = obj._get_max_dates_from_table(
+            delta_date_columns=["loaddate"],
+            database="postgres_test",
+            schema="public",
+            table="employees_test_load",
+        )
+        assert max_dates
+        assert max_dates == datetime(2023, 8, 22, 0, 0, tzinfo=timezone("UTC"))
+
+    def test_add_columns_to_table(self, obj):
+        success = obj._add_columns_to_table(
+            columns_types={"update_date": datetime},
+            database="postgres_test",
+            schema="public",
+            table="employees_test_load",
+        )
+        assert success
 
     # def test_load_data(self, obj):
     #     ...

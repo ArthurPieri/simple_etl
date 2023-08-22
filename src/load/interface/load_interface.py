@@ -100,10 +100,13 @@ class LoadInterface(ABC):
         """Get types for columns"""
         cols_and_types = {}
         for col in columns:
-            types = set()
+            types = []
             for dictionary in data:
                 if col in dictionary.keys():
-                    types.add(type(dictionary[col]))
+                    types.append(type(dictionary[col]))
+            if "NoneType" in types:
+                types.remove("NoneType")
+            types = list(set(types))
             cols_and_types[col] = types
         return cols_and_types
 
