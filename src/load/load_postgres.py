@@ -16,15 +16,13 @@ from .interface.load_interface import (  # pylint: disable=import-error, no-name
 
 class ToPostgres(LoadInterface):
     """
-    Makes all the necessary treatments to load data into postgres.
+    Load data into postgres.
     """
 
     def load(  # pylint: disable=dangerous-default-value
         self,
         data: list[dict],
         merge_ids: list,
-        columns_to_drop: list = [],
-        columns_to_rename: dict = {},
         **kwargs,
     ) -> None:
         """
@@ -36,11 +34,7 @@ class ToPostgres(LoadInterface):
         """
         data = self._add_loaddate(data=data)
 
-        columns, data = self._treat_columns(
-            data=data,
-            columns_to_drop=columns_to_drop,
-            columns_to_rename=columns_to_rename,
-        )
+        columns = self._get_columns(data=data)
 
         data_columns_types = self._get_python_types(columns, data)
         table_columns = self._get_postgres_columns(**kwargs)

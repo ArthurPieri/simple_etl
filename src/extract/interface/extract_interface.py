@@ -25,7 +25,7 @@ class ExtractInterface(ABC):
         **kwargs
     ) -> dict:
         """
-        Extract data from source and return a dict
+        Extract data from source and return a list of dicts
         """
 
     @abstractmethod
