@@ -37,7 +37,7 @@ class LoadInterface(ABC):
         **kwargs,
     ) -> None:
         """
-        Treat the DataFrame column names and types and load data to Lake
+        Load data to destination
         """
 
     def get_last_load_date(
