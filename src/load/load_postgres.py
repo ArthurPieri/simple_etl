@@ -16,7 +16,7 @@ from .interface.load_interface import (  # pylint: disable=import-error, no-name
 
 class ToPostgres(LoadInterface):
     """
-    Makes all the necessary treatments to load data into postgres.
+    Load data into postgres.
     """
 
     def load(  # pylint: disable=dangerous-default-value

@@ -1,0 +1,30 @@
+# pylint: disable=import-error, no-name-in-module, too-few-public-methods
+from .interface.transform_interface import (
+    TransformInterface,
+)
+
+
+class TrasnformPostgres(TransformInterface):
+    """
+    Makes all the treatment to load data into postgres
+    """
+
+    def transform(  # pylint: disable=dangerous-default-value
+        self,
+        data: list[dict],
+        columns_to_drop: list = [],
+        columns_to_rename: dict = {},
+        **kwargs
+    ) -> [dict]:
+        """
+        Transform data to be sent to postgres
+        """
+        if columns_to_drop:
+            data = self._drop_columns(data, columns_to_drop)
+
+        if columns_to_rename:
+            data = self._rename_columns(data, columns_to_rename)
+
+        columns, data = self._treat_column_names(data)
+
+        return columns, data

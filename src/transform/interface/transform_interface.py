@@ -41,19 +41,6 @@ class TransformInterface(ABC):
             cols_and_types[col] = types
         return cols_and_types
 
-    def _treat_columns(
-        self, data: list[dict], columns_to_drop: list, columns_to_rename
-    ) -> [set, list]:
-        if columns_to_drop:
-            data = self._drop_columns(data, columns_to_drop)
-
-        if columns_to_rename:
-            data = self._rename_columns(data, columns_to_rename)
-
-        columns, data = self._treat_column_names(data)
-
-        return columns, data
-
     def _drop_columns(self, data: list[dict], columns_to_drop: list) -> list[dict]:
         """
         Drop columns from data.
