@@ -26,20 +26,6 @@ def fixture_extracted_data():
 
 
 @pytest.fixture
-def fixture_postgres_connection():
-    """
-    Postgres connection data
-    """
-    return {
-        "host": "localhost",
-        "port": "5432",
-        "database": "postgres_test",
-        "user": "postgres",
-        "password": "postgres",
-    }
-
-
-@pytest.fixture
 def fixture_rows_columns():
     """
     Rows and columns to test

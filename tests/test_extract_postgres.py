@@ -1,10 +1,21 @@
-# pylint: disable=missing-module-docstring, missing-function-docstring, protected-access
+# pylint: disable=missing-module-docstring, missing-function-docstring, too-few-public-methods. redefined-outer-name, protected-access, unused-import
+import pytest
 from ..src.extract.extract_postgres import FromPostgres  # pylint: disable=import-error
-from .postgres.fixture_postgres import (  # pylint: disable=unused-import
+from .postgres.fixture_postgres import (
     fixture_extracted_data,
-    fixture_postgres_connection,
     fixture_rows_columns,
 )
+
+
+@pytest.fixture(scope="module")
+def obj():
+    yield FromPostgres(
+        host="localhost",
+        port="5432",
+        database="postgres_test",
+        user="postgres",
+        password="postgres",
+    )
 
 
 class TestExtractPostgres:  # pylint: disable=too-few-public-methods
@@ -14,31 +25,22 @@ class TestExtractPostgres:  # pylint: disable=too-few-public-methods
 
     def test_extract_from_postgres(  # pylint: disable=redefined-outer-name
         self,
-        fixture_postgres_connection,
+        obj,
         fixture_extracted_data,
-        fixture_rows_columns,
     ):
         """
         Test extract method
         """
-        # Test connection
-        obj = FromPostgres(
-            host=fixture_postgres_connection["host"],
-            port=fixture_postgres_connection["port"],
-            database=fixture_postgres_connection["database"],
-            user=fixture_postgres_connection["user"],
-            password=fixture_postgres_connection["password"],
-        )
-        assert obj
-
-        # Test log
-        assert obj.log
-
-        # Test extract
         data = obj.extract(schema="public", table="employees")
         assert data
         assert data == fixture_extracted_data
 
+    def test_connection_and_log(self, obj):
+        assert obj
+        assert obj.conn
+        assert obj.log
+
+    def test_get_select_query(self, obj):
         # Test get select query
         sql = obj._get_select_query(
             schema="public",
@@ -47,24 +49,13 @@ class TestExtractPostgres:  # pylint: disable=too-few-public-methods
         )
         assert sql == "SELECT * FROM public.employees"
 
-        # Test _transform_to_dict
+    def test_transform_to_dict(self, obj, fixture_rows_columns, fixture_extracted_data):
         data = obj._transform_to_dict(
             fixture_rows_columns["rows"], fixture_rows_columns["columns"]
         )
         assert data == fixture_extracted_data
 
-        del obj.conn
-        # Test _get_connection
-        obj._get_connection(
-            host=fixture_postgres_connection["host"],
-            port=fixture_postgres_connection["port"],
-            database=fixture_postgres_connection["database"],
-            user=fixture_postgres_connection["user"],
-            password=fixture_postgres_connection["password"],
-        )
-        assert obj.conn
-
-        # Test __generate_where_clause
+    def test_generate_where_clause(self, obj):
         sql = obj._get_select_query(
             schema="public",
             table="employees",
@@ -72,7 +63,3 @@ class TestExtractPostgres:  # pylint: disable=too-few-public-methods
             last_date="2021-01-01",
         )
         assert sql == "SELECT * FROM public.employees where last_update >= '2021-01-01'"
-
-        obj.conn.close()
-
-        assert obj.conn.closed
