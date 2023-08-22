@@ -1,7 +1,7 @@
 # pylint: disable=import-error, no-name-in-module, too-few-public-methods
 from psycopg2 import connect
 
-from .interface.extract import ExtractInterface
+from .interface.extract_interface import ExtractInterface
 
 
 class FromPostgres(ExtractInterface):
@@ -13,6 +13,7 @@ class FromPostgres(ExtractInterface):
         self,
         delta_date_columns: list = [],
         batch_size: int = 10000,
+        last_date: str = None,
         **kwargs,
     ) -> list:
         """
@@ -25,6 +26,7 @@ class FromPostgres(ExtractInterface):
             schema=kwargs["schema"],
             table=kwargs["table"],
             delta_date_columns=delta_date_columns,
+            last_date=last_date,
         )
 
         self.log.info("Executing query: %s", select_query)
@@ -41,6 +43,7 @@ class FromPostgres(ExtractInterface):
 
         return data
 
+    # pylint: disable=duplicate-code
     def _get_connection(self, **kwargs) -> None:
         """
         Get connection to Postgres
@@ -64,12 +67,15 @@ class FromPostgres(ExtractInterface):
         schema: str,
         table: str,
         delta_date_columns: list,
+        last_date: str = None,
     ) -> str:
         sql_query = f"SELECT * FROM {schema}.{table}"
 
         if delta_date_columns:
             sql_query = self.__generate_where_clause(
-                select_statment=sql_query, delta_date_columns=delta_date_columns
+                select_statment=sql_query,
+                delta_date_columns=delta_date_columns,
+                last_date=last_date,
             )
 
         return sql_query

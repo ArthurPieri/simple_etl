@@ -18,7 +18,11 @@ class ExtractInterface(ABC):
 
     @abstractmethod
     def extract(
-        self, delta_date_columns: list, batch_size: int = 10000, **kwargs
+        self,
+        delta_date_columns: list,
+        batch_size: int = 10000,
+        last_date=None,
+        **kwargs
     ) -> dict:
         """
         Extract data from source and return a dict

@@ -26,14 +26,35 @@ def fixture_extracted_data():
 
 
 @pytest.fixture
-def fixture_postgres_connection():
+def fixture_load_data():
     """
-    Postgres connection data
+    Data to be loaded
+    """
+    return [
+        {
+            "id": 5,
+            "first_name": "Elizabeth",
+            "last_name": "Smith",
+            "email": "lizzy@smith.com",
+        },
+        {
+            "id": 6,
+            "first_name": "Joseph",
+            "last_name": "Smith",
+            "email": "jose@smith.com",
+        },
+    ]
+
+
+@pytest.fixture
+def fixture_rows_columns():
+    """
+    Rows and columns to test
     """
     return {
-        "host": "localhost",
-        "port": "5432",
-        "database": "postgres_test",
-        "user": "postgres",
-        "password": "postgres",
+        "rows": [
+            (1, "John", "Doe", "john.doe@example.com"),
+            (2, "Jane", "Doe", "jane.doe@example.com"),
+        ],
+        "columns": ["id", "first_name", "last_name", "email"],
     }
