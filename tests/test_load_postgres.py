@@ -4,6 +4,7 @@ from pytz import timezone
 import pytest
 from .postgres.fixture_postgres import (
     fixture_extracted_data,
+    fixture_load_data,
 )
 
 from ..src.load.load_postgres import ToPostgres
@@ -128,6 +129,10 @@ class TestToPostgres:
         assert last_date == datetime(2023, 8, 22, 0, 0, tzinfo=timezone("UTC"))
 
     def test_get_max_dates_from_table(self, obj):
+        cursor = obj.conn.cursor()
+        cursor.execute("DELETE FROM public.employees_test_load WHERE id = 5;")
+        cursor.execute("DELETE FROM public.employees_test_load WHERE id = 6;")
+        cursor.close()
         max_dates = obj._get_max_dates_from_table(
             delta_date_columns=["loaddate"],
             database="postgres_test",
@@ -138,6 +143,12 @@ class TestToPostgres:
         assert max_dates == datetime(2023, 8, 22, 0, 0, tzinfo=timezone("UTC"))
 
     def test_add_columns_to_table(self, obj):
+        cursor = obj.conn.cursor()
+        cursor.execute(
+            "ALTER TABLE public.employees_test_load DROP COLUMN IF EXISTS update_date"
+        )
+        cursor.close()
+
         success = obj._add_columns_to_table(
             columns_types={"update_date": datetime},
             database="postgres_test",
@@ -146,5 +157,23 @@ class TestToPostgres:
         )
         assert success
 
-    # def test_load_data(self, obj):
-    #     ...
+    def test_load_data(self, obj, fixture_load_data):
+        cursor = obj.conn.cursor()
+        cursor.execute("DELETE FROM public.employees_test_load WHERE id = 5;")
+        cursor.execute("DELETE FROM public.employees_test_load WHERE id = 6;")
+        cursor.close()
+
+        success = obj._load_data(
+            columns_and_types={
+                "id": int,
+                "first_name": str,
+                "last_name": str,
+                "email": str,
+            },
+            data=fixture_load_data,
+            merge_ids=[],
+            database="postgres_test",
+            schema="public",
+            table="employees_test_load",
+        )
+        assert success

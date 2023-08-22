@@ -259,7 +259,60 @@ class ToPostgres(LoadInterface):
             columns = [column[0] for column in columns]
         return columns
 
+    def _get_insert_sql(
+        self, columns_and_types: dict, merge_ids: list, **kwargs
+    ) -> str:
+        """
+        Get SQL statement to insert data into Postgres
+        """
+        table_name = f'{kwargs["schema"]}.{kwargs["table"]}'
+        sql = f"INSERT INTO {table_name} ("
+
+        for col in columns_and_types.keys():
+            sql += f"{col}, "
+
+        sql = sql[:-2] + ") VALUES ("
+
+        for col in columns_and_types.keys():
+            sql += f"%({col})s, "
+
+        sql = sql[:-2] + ")"
+
+        if merge_ids:
+            sql += " ON CONFLICT ("
+            for col in merge_ids:
+                sql += f"{col}, "
+            sql = sql[:-2] + ") DO UPDATE SET "
+
+            for col in columns_and_types.keys():
+                sql += f"{col} = EXCLUDED.{col}, "
+
+            sql = sql[:-2]
+
+        self.log.info("SQL statement: %s", sql)
+
+        return sql
+
     def _load_data(
         self, columns_and_types: dict, data: list[dict], merge_ids: list, **kwargs
-    ) -> None:
-        ...
+    ) -> bool:
+        cursor = self.conn.cursor()
+        self.log.info(
+            "Loading data into table %s.%s", kwargs["schema"], kwargs["table"]
+        )
+        insert_sql = self._get_insert_sql(
+            columns_and_types=columns_and_types, merge_ids=merge_ids, **kwargs
+        )
+        try:
+            cursor.executemany(insert_sql, data)
+            self.conn.commit()
+            return True
+        except Exception as error:
+            self.log.error(
+                "Error loading data into table %s.%s", kwargs["schema"], kwargs["table"]
+            )
+            self.log.error(error)
+            self.conn.rollback()
+            raise error
+        finally:
+            cursor.close()

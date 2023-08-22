@@ -26,6 +26,27 @@ def fixture_extracted_data():
 
 
 @pytest.fixture
+def fixture_load_data():
+    """
+    Data to be loaded
+    """
+    return [
+        {
+            "id": 5,
+            "first_name": "Elizabeth",
+            "last_name": "Smith",
+            "email": "lizzy@smith.com",
+        },
+        {
+            "id": 6,
+            "first_name": "Joseph",
+            "last_name": "Smith",
+            "email": "jose@smith.com",
+        },
+    ]
+
+
+@pytest.fixture
 def fixture_rows_columns():
     """
     Rows and columns to test
