@@ -10,7 +10,7 @@ db.createUser(
 
 db.auth("mongoadmin", "mongoadmin");
 
-var dbUser = connect("mongodb://localhost:27017/meuBancoDeDados");
+var dbUser = connect("mongodb://localhost:27017/test_users");
 
 var ObjectId = ObjectId || function(hexStr) { return new BinData(0, hexStr); }; // Para compatibilidade
 
