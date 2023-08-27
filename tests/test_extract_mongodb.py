@@ -23,3 +23,14 @@ class TestFromMongodb:
         assert obj
         assert obj.client
         assert obj.log
+
+    def test_get_cursor(self, obj):
+        cursor = obj._get_cursor(
+            batch_size=10000,
+            delta_date_columns=None,
+            last_date=None,
+            filter=None,
+            aggregation_clause=None,
+            collection="usuarios",
+        )
+        assert cursor

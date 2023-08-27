@@ -1,20 +1,20 @@
-db = connect("mongodb://localhost:27017/admin");
+db = db.getSiblingDB('mydatabase');
 
-db.createUser(
-  {
-    user: "mongoadmin",
-    pwd: "mongoadmin",
-    roles: [{ role: "userAdminAnyDatabase", db: "admin" }]
-  }
-);
+db.createUser({
+    user: 'mongoadmin',
+    pwd: 'mongoadmin',
+    roles: [{
+        role: 'readWrite',
+        db: 'mydatabase'
+    }]
+});
 
-db.auth("mongoadmin", "mongoadmin");
+db = connect("mongodb://mongoadmin:mongoadmin@localhost:27017/mydatabase");
 
-var dbUser = connect("mongodb://localhost:27017/test_users");
 
 var ObjectId = ObjectId || function(hexStr) { return new BinData(0, hexStr); }; // Para compatibilidade
 
-db.usuarios.insertMany([
+users = [
     {
         "_id": ObjectId("507f1f77bcf86cd799439011"),
         "nome": "João",
@@ -28,7 +28,7 @@ db.usuarios.insertMany([
         "aniversario": new Date("1995-01-01T00:00:00Z"),
         "campoNulo": null,
         "fotoPerfil": new BinData(0, "binaryDataHere"),
-        "website": /^https:\/\/www\.example\.com$/,
+        "website": "https://www.example.com/",
         "funcaoJS": function() { print("Hello!"); },
         "tag": "dev"
     },
@@ -45,7 +45,7 @@ db.usuarios.insertMany([
         "aniversario": new Date("1999-05-05T00:00:00Z"),
         "campoNulo": null,
         "fotoPerfil": new BinData(0, "binaryDataHere2"),
-        "website": /^https:\/\/www\.maria\.com$/,
+        "website": "https://www.maria.com/",
         "funcaoJS": function() { print("Hi!"); },
         "tag": "writer"
     },
@@ -62,7 +62,7 @@ db.usuarios.insertMany([
         "aniversario": new Date("1993-03-03T00:00:00Z"),
         "campoNulo": null,
         "fotoPerfil": new BinData(0, "binaryDataHere3"),
-        "website": /^https:\/\/www\.pedro\.com$/,
+        "website": "https://www.pedro.com/",
         "funcaoJS": function() { print("Hey!"); },
         "tag": "adventurer"
     },
@@ -94,8 +94,12 @@ db.usuarios.insertMany([
         "aniversario": new Date("1991-06-15T00:00:00Z"),
         "campoNulo": null,
         "fotoPerfil": new BinData(0, "binaryDataHere4"),
-        "website": /^https:\/\/www\.lucas\.com$/,
+        "website": "https://www.lucas.com",
         "funcaoJS": function() { print("Hola!"); },
         "tag": "shopper"
     }
-]);
+];
+
+db.usuarios.insertMany(users);
+
+db.usuarios.createIndex({ nome: 1 }, { unique: true });
