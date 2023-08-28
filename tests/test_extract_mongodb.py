@@ -9,8 +9,7 @@ def obj():
         host="localhost",
         port=27017,
         database="test_users",
-        user="mongoadmin",
-        password="mongoadmin",
+        auth=False,
     )
 
 
@@ -31,6 +30,6 @@ class TestFromMongodb:
             last_date=None,
             filter=None,
             aggregation_clause=None,
-            collection="usuarios",
+            collection="users",
         )
         assert cursor

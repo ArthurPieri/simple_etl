@@ -32,6 +32,7 @@ class FromMongodb(ExtractInterface):
         """
         Get connection to Mongodb
         Kwargs arguments:
+        - auth : bool
         - host
         - port
         - user
@@ -39,10 +40,15 @@ class FromMongodb(ExtractInterface):
         - database
         """
 
-        self.client = MongoClient(
-            f"""mongodb://{kwargs["user"]}:{kwargs["password"]}
-            @{kwargs["host"]}:{kwargs["port"]}/""",
-        )
+        if not kwargs["auth"]:
+            self.client = MongoClient(
+                f"""mongodb://{kwargs["host"]}:{kwargs["port"]}/""",
+            )
+        else:
+            self.client = MongoClient(
+                f"""mongodb://{kwargs["user"]}:{kwargs["password"]}
+                @{kwargs["host"]}:{kwargs["port"]}/""",
+            )
 
         # Select a database
         self.db = self.client[kwargs["database"]]

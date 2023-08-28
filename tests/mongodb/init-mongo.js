@@ -1,19 +1,5 @@
 db = db.getSiblingDB('mydatabase');
 
-db.createUser({
-    user: 'mongoadmin',
-    pwd: 'mongoadmin',
-    roles: [{
-        role: 'readWrite',
-        db: 'mydatabase'
-    }]
-});
-
-db = connect("mongodb://mongoadmin:mongoadmin@localhost:27017/mydatabase");
-
-
-var ObjectId = ObjectId || function(hexStr) { return new BinData(0, hexStr); }; // Para compatibilidade
-
 users = [
     {
         "_id": ObjectId("507f1f77bcf86cd799439011"),
@@ -100,6 +86,4 @@ users = [
     }
 ];
 
-db.usuarios.insertMany(users);
-
-db.usuarios.createIndex({ nome: 1 }, { unique: true });
+db.users.insertMany(users);

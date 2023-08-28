@@ -17,21 +17,11 @@ services:
     restart: unless-stopped
 
   db-mongo:
-    build:
-        context: ./mongodb
-        dockerfile: Dockerfile
-    container_name: test-mongo
+    build: 
+      context: ./mongodb
+      dockerfile: Dockerfile
+    container_name: mymongo
+    environment:
+      MONGO_INITDB_DATABASE: mydatabase
     ports:
       - "27017:27017"
-    expose:
-      - 27017
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=mongoadmin
-      - MONGO_INITDB_ROOT_PASSWORD=mongoadmin
-    restart: unless-stopped
-    volumes:
-      - mongo-data:/data/db
-
-volumes:
-  mongo-data:
-    driver: local
