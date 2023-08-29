@@ -1,6 +1,9 @@
 # pylint: disable=missing-module-docstring, missing-function-docstring, too-few-public-methods. redefined-outer-name, protected-access, unused-import
 from unittest.mock import MagicMock
+from datetime import datetime
+
 import pytest
+
 
 from ..src.extract.extract_mongodb import FromMongodb  # pylint: disable=import-error
 
@@ -50,6 +53,59 @@ class TestFromMongodb:
         )
         assert cursor
         assert cursor.alive
+
+    def test_get_cursor_with_agg_clause(self, obj):
+        cursor = obj._get_cursor(
+            batch_size=10000,
+            delta_date_columns=None,
+            last_date=None,
+            filter=None,
+            aggregation_clause={
+                "$project": {
+                    "name": 1,
+                    "email": 1,
+                    "created_at": 1,
+                }
+            },
+            collection="users",
+        )
+        assert cursor
+        assert cursor.alive
+
+    def test_get_cursor_with_last_date(self, obj):
+        cursor = obj._get_cursor(
+            batch_size=10000,
+            delta_date_columns=["created_at"],
+            last_date=datetime(2021, 1, 1),
+            filter=None,
+            aggregation_clause=None,
+            collection="users",
+        )
+        assert cursor
+        assert cursor.alive
+
+    def test_get_cursor_with_filter(self, obj):
+        cursor = obj._get_cursor(
+            batch_size=10000,
+            delta_date_columns=None,
+            last_date=None,
+            filter=[{"name": "John"}],
+            aggregation_clause=None,
+            collection="users",
+        )
+        assert cursor
+        assert cursor.alive
+
+    def test_auth_connection(self, obj):
+        obj._get_connection(
+            auth=True,
+            host="localhost",
+            port=27017,
+            database="mydatabase",
+            user="myuser",
+            password="mypassword",
+        )
+        assert obj.client
 
     @pytest.fixture(scope="module")
     def mock_cursor(self):
