@@ -28,10 +28,13 @@ class TestFromMongodb:
             last_date=None,
         )
         assert data
+        assert len(data) == 4
+        assert isinstance(data, list)
 
     def test_connection_and_log(self, obj):
         assert obj
         assert obj.client
+        assert obj.db.name == "mydatabase"
         assert obj.log
 
     def test_get_cursor(self, obj):
@@ -44,3 +47,4 @@ class TestFromMongodb:
             collection="users",
         )
         assert cursor
+        assert cursor.alive
