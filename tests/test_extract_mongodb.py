@@ -8,7 +8,7 @@ def obj():
     yield FromMongodb(
         host="localhost",
         port=27017,
-        database="test_users",
+        database="mydatabase",
         auth=False,
     )
 
@@ -17,6 +17,17 @@ class TestFromMongodb:
     """
     Testing extract mongodb class
     """
+
+    def test_extract(self, obj):
+        data = obj.extract(
+            aggregation_clause=None,
+            batch_size=10000,
+            collection="users",
+            delta_date_columns=None,
+            filter=None,
+            last_date=None,
+        )
+        assert data
 
     def test_connection_and_log(self, obj):
         assert obj

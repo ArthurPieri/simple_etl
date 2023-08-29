@@ -1,11 +1,12 @@
 # pylint: disable=import-error, no-name-in-module, too-few-public-methods
+import json
 from logging import shutdown
 from datetime import datetime
 
 from pymongo import MongoClient
 
-# from bson import decode_all
-# from bson.json_util import dumps
+from bson import decode_all
+from bson.json_util import dumps
 
 from .interface.extract_interface import ExtractInterface
 
@@ -27,6 +28,20 @@ class FromMongodb(ExtractInterface):
         Kwargs arguments:
         - collection
         """
+        cursor = self._get_cursor(
+            batch_size=batch_size,
+            delta_date_columns=delta_date_columns,
+            last_date=last_date,
+            **kwargs,
+        )
+        for batch in cursor:
+            try:
+                data = json.loads(dumps(decode_all(batch)))
+            except Exception as exc:
+                self.log.error("Error extracting data: %s", exc)
+                raise RuntimeError(exc) from exc
+
+        return data
 
     def _get_connection(self, **kwargs) -> None:
         """
