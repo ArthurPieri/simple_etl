@@ -34,6 +34,7 @@ class FromMongodb(ExtractInterface):
             last_date=last_date,
             **kwargs,
         )
+        data = []
         for batch in cursor:
             try:
                 data = json.loads(dumps(decode_all(batch)))
