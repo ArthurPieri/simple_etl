@@ -14,7 +14,7 @@ class TrasnformPostgres(TransformInterface):
         data: list[dict],
         columns_to_drop: list = [],
         columns_to_rename: dict = {},
-        **kwargs
+        **kwargs  # pylint: disable=unused-argument
     ) -> [dict]:
         """
         Transform data to be sent to postgres

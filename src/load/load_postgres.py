@@ -9,9 +9,9 @@ from psycopg2 import connect
 
 from pytz import timezone
 
-from .interface.load_interface import (  # pylint: disable=import-error, no-name-in-module
+from .interface.load_interface import (
     LoadInterface,
-)
+)  # pylint: disable=import-error, no-name-in-module
 
 
 class ToPostgres(LoadInterface):
@@ -210,13 +210,11 @@ class ToPostgres(LoadInterface):
         try:
             cursor.execute(sql)
             max_date = cursor.fetchone()  # type: ignore
-            print(max_date)
         except Exception as exc:
             self.log.error("Error while executing SQL statement: %s", exc)
             return None
 
         last_date = max_date[0]
-        print("last date = ", last_date)
 
         if last_date:
             self.log.info("Last date in table: %s", last_date)

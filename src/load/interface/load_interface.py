@@ -1,4 +1,4 @@
-# pylint: disable=duplicate-code
+# pylint: disable=duplicate-code, import-error
 
 from abc import ABC, abstractmethod
 from logging import getLogger, shutdown
@@ -100,8 +100,9 @@ class LoadInterface(ABC):
             for dictionary in data:
                 if col in dictionary.keys():
                     types.append(type(dictionary[col]))
-            if "NoneType" in types:
-                types.remove("NoneType")
+            # check if <class 'NoneType'> is in types
+            if type(None) in types:
+                types.remove(type(None))
             types = list(set(types))
             cols_and_types[col] = types
         return cols_and_types

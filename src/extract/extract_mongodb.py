@@ -1,4 +1,4 @@
-# pylint: disable=import-error, no-name-in-module, too-few-public-methods
+# pylint: disable=import-error, no-name-in-module, too-few-public-methods, attribute-defined-outside-init, protected-access, unused-import
 import json
 from logging import shutdown
 from datetime import datetime
