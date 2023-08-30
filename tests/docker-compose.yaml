@@ -15,3 +15,13 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     restart: unless-stopped
+
+  db-mongo:
+    build: 
+      context: ./mongodb
+      dockerfile: Dockerfile
+    container_name: mymongo
+    environment:
+      MONGO_INITDB_DATABASE: mydatabase
+    ports:
+      - "27017:27017"

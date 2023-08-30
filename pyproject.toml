@@ -11,6 +11,8 @@ python = "^3.11"
 unidecode = "^1.3.6"
 psycopg2-binary = "^2.9.6"
 pytz = "^2023.3"
+pymongo = "^4.5.0"
+pytest-mock = "^3.11.1"
 
 [tool.poetry.group.code_quality.dependencies]
 black = "^23.7.0"

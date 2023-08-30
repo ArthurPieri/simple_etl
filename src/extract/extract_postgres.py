@@ -1,4 +1,6 @@
 # pylint: disable=import-error, no-name-in-module, too-few-public-methods
+from logging import shutdown
+
 from psycopg2 import connect
 
 from .interface.extract_interface import ExtractInterface
@@ -6,7 +8,7 @@ from .interface.extract_interface import ExtractInterface
 
 class FromPostgres(ExtractInterface):
     """
-    Extract data from Postgres and return a dictionary
+    Extract data from Postgres and return a list of dictionaries
     """
 
     def extract(  # pylint: disable=dangerous-default-value
@@ -15,9 +17,9 @@ class FromPostgres(ExtractInterface):
         batch_size: int = 10000,
         last_date: str = None,
         **kwargs,
-    ) -> list:
+    ) -> list[dict]:
         """
-        Extract data from postgres and return a dictionary
+        Extract data from postgres and return a list of dictionaries
         Kwargs arguments:
         - schema
         - table
@@ -103,3 +105,8 @@ class FromPostgres(ExtractInterface):
             data.append(dict(zip(columns, row)))
 
         return data
+
+    def __del__(self) -> None:
+        self.conn.close()  # pylint: disable=no-member # type: ignore
+        self.log.info("Connection %s closed", self.__class__.__name__)
+        shutdown()

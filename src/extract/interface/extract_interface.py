@@ -1,7 +1,7 @@
 # pylint: disable=duplicate-code
 
 from abc import ABC, abstractmethod
-from logging import getLogger, shutdown
+from logging import getLogger
 
 
 class ExtractInterface(ABC):
@@ -37,6 +37,12 @@ class ExtractInterface(ABC):
         - kwargs['conn_name']: name of the connection
         """
 
+    @abstractmethod
+    def __del__(self) -> None:
+        """
+        Close connection to source and shutdown logging
+        """
+
     def __start_log(self) -> None:
         """
         Start logging for class
@@ -45,8 +51,3 @@ class ExtractInterface(ABC):
         self.log.info("-----------------------------------------")
         self.log.info("Initializing %s class", self.__class__.__name__)
         self.log.info("-----------------------------------------")
-
-    def __del__(self) -> None:
-        self.conn.close()  # pylint: disable=no-member # type: ignore
-        self.log.info("Connection %s closed", self.__class__.__name__)
-        shutdown()

@@ -22,7 +22,7 @@ class TestTransformPostgres:
         data = fixture_extracted_data
         data[0]["customer.$oid"] = "5f8d4f8f9d6d7d0001c2d3a0"
         data[1]["customer.$oid"] = "5f8d4f8f9d6d7d0001c2d3a1"
-        columns, data = obj._treat_columns(
+        columns, data = obj.transform(
             data=data,
             columns_to_drop=["loaddate"],
             columns_to_rename={"first_name": "first_name_new"},
