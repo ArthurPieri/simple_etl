@@ -1,3 +1,4 @@
+# pylint: disable=import-error, no-name-in-module
 """'
 This class is used to load data into a postgres database.
 It recieves a dataframe, a schema name, a table name, and a connection string.
@@ -9,9 +10,7 @@ from psycopg2 import connect
 
 from pytz import timezone
 
-from .interface.load_interface import (
-    LoadInterface,
-)  # pylint: disable=import-error, no-name-in-module
+from .interface.load_interface import LoadInterface
 
 
 class ToPostgres(LoadInterface):

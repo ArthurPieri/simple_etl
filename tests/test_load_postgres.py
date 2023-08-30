@@ -25,7 +25,7 @@ def obj():
     )
 
 
-class TestToPostgres:  # pylint: disable=too-few-public-methods
+class TestToPostgres:  # pylint: disable=too-many-public-methods
     """
     Makes all the necessary treatments to load data into postgres.
     """
@@ -155,3 +155,47 @@ class TestToPostgres:  # pylint: disable=too-few-public-methods
             table="employees_test_load",
         )
         assert success
+
+    def test_create_table(self):
+        # mock the return of _get_postgres_columns
+        # create_empty_table
+        # add_columns_to_table
+        pass
+
+    def test_extract_add_columns_to_table(self):
+        # mock the return of _get_postgres_columns
+        # add_columns_to_table
+        pass
+
+    def test_add_columns_to_table_error(self):
+        # mock the return of _get_postgres_columns
+        # add_columns_to_table
+        pass
+
+    def test_create_empty_table_error(self):
+        pass
+
+    def test_get_create_table_sql_temp(self):
+        pass
+
+    def test_get_create_table_sql_error(self):
+        pass
+
+    def test_get_max_dates_from_table_with_none(self):
+        pass
+
+    def test_get_max_dates_from_table_no_dates_found(self):
+        pass
+
+    def test_get_max_dates_from_table_error(self):
+        pass
+
+    def test_get_max_date_error(self):
+        pass
+
+    def test_get_postgres_types(self):
+        # test all types
+        pass
+
+    def test_load_data_error(self):
+        pass

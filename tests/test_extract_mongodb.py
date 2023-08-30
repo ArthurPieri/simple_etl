@@ -2,8 +2,7 @@
 from unittest.mock import MagicMock
 from datetime import datetime
 
-import pytest
-
+import pytest  # pylint: disable=import-error
 
 from ..src.extract.extract_mongodb import FromMongodb  # pylint: disable=import-error
 
