@@ -96,6 +96,24 @@ class TestFromMongodb:
         assert cursor
         assert cursor.alive
 
+    def test_get_cursor_with_filter_and_agg_clause(self, obj):
+        cursor = obj._get_cursor(
+            batch_size=10000,
+            delta_date_columns=None,
+            last_date=None,
+            filter=[{"name": "John"}],
+            aggregation_clause={
+                "$project": {
+                    "name": 1,
+                    "email": 1,
+                    "created_at": 1,
+                }
+            },
+            collection="users",
+        )
+        assert cursor
+        assert cursor.alive
+
     def test_auth_connection(self, obj):
         obj._get_connection(
             auth=True,
