@@ -1,8 +1,12 @@
-# pylint: disable=missing-module-docstring, missing-function-docstring, too-few-public-methods. redefined-outer-name, protected-access, unused-import
+# pylint: disable= missing-function-docstring, redefined-outer-name, protected-access, duplicate-code
+"""
+Tests for load_postgres.py and load_interface.py
+"""
+
 from datetime import datetime
-from pytz import timezone
-import pytest
-from .postgres.fixture_postgres import (
+from pytz import timezone  # pylint: disable=import-error
+import pytest  # pylint: disable=import-error
+from .postgres.fixture_postgres import (  # pylint: disable=unused-import
     fixture_extracted_data,
     fixture_load_data,
 )
@@ -21,7 +25,7 @@ def obj():
     )
 
 
-class TestToPostgres:
+class TestToPostgres:  # pylint: disable=too-few-public-methods
     """
     Makes all the necessary treatments to load data into postgres.
     """
@@ -39,30 +43,6 @@ class TestToPostgres:
     def test_connection_and_log(self, obj):
         assert obj.conn
         assert obj.log
-
-    def test_add_loaddate(self, fixture_extracted_data, obj):
-        data = obj._add_loaddate(data=fixture_extracted_data)
-        assert data[0]["loaddate"]
-        assert data[1]["loaddate"]
-
-    def test_get_python_types(self, fixture_extracted_data, obj):
-        data = fixture_extracted_data
-        data[0]["loaddate"] = datetime.now()
-        data[1]["loaddate"] = datetime.now()
-
-        cols_and_types = obj._get_python_types(
-            columns=["id", "first_name", "last_name", "email", "loaddate"],
-            data=data,
-        )
-        assert cols_and_types["id"][0].__name__ == "int"
-        assert cols_and_types["first_name"][0].__name__ == "str"
-        assert cols_and_types["last_name"][0].__name__ == "str"
-        assert cols_and_types["email"][0].__name__ == "str"
-        assert cols_and_types["loaddate"][0].__name__ == "datetime"
-
-    def test_get_columns(self, obj, fixture_extracted_data):
-        cols = obj._get_columns(data=fixture_extracted_data)
-        assert cols == {"id", "last_name", "email", "first_name"}
 
     def test_get_postgres_columns(self, obj):
         columns = obj._get_postgres_columns(schema="public", table="employees")
@@ -85,16 +65,6 @@ class TestToPostgres:
             table="employees_load",
         )
         assert success
-
-    def get_last_load_date(self, obj):
-        last_date = obj._get_last_load_date(
-            delta_date_columns=["loaddate"],
-            database="postgres_test",
-            schema="public",
-            table="employees_test_load",
-        )
-        assert last_date
-        assert last_date == datetime(2023, 8, 22, 0, 0, tzinfo=timezone("UTC"))
 
     def test_get_max_dates_from_table(self, obj):
         cursor = obj.conn.cursor()
