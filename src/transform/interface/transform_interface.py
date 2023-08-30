@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from logging import getLogger, shutdown
 
-import unidecode
+import unidecode  # pylint: disable=import-error
 
 
 class TransformInterface(ABC):
