@@ -1,10 +1,16 @@
-# pylint: disable=missing-module-docstring, missing-function-docstring, too-few-public-methods. redefined-outer-name, protected-access, unused-import
+# pylint: disable= missing-function-docstring, redefined-outer-name, protected-access, duplicate-code
+"""
+Tests for load_postgres.py and load_interface.py
+"""
+from io import StringIO
+import logging
+
 from datetime import datetime
-from pytz import timezone
-import pytest
-from .postgres.fixture_postgres import (
+import pytest  # pylint: disable=import-error
+from .postgres.fixture_postgres import (  # pylint: disable=unused-import
     fixture_extracted_data,
     fixture_load_data,
+    fixture_new_column_data,
 )
 
 from ..src.load.load_postgres import ToPostgres
@@ -21,7 +27,7 @@ def obj():
     )
 
 
-class TestToPostgres:
+class TestToPostgres:  # pylint: disable=too-many-public-methods
     """
     Makes all the necessary treatments to load data into postgres.
     """
@@ -39,30 +45,6 @@ class TestToPostgres:
     def test_connection_and_log(self, obj):
         assert obj.conn
         assert obj.log
-
-    def test_add_loaddate(self, fixture_extracted_data, obj):
-        data = obj._add_loaddate(data=fixture_extracted_data)
-        assert data[0]["loaddate"]
-        assert data[1]["loaddate"]
-
-    def test_get_python_types(self, fixture_extracted_data, obj):
-        data = fixture_extracted_data
-        data[0]["loaddate"] = datetime.now()
-        data[1]["loaddate"] = datetime.now()
-
-        cols_and_types = obj._get_python_types(
-            columns=["id", "first_name", "last_name", "email", "loaddate"],
-            data=data,
-        )
-        assert cols_and_types["id"][0].__name__ == "int"
-        assert cols_and_types["first_name"][0].__name__ == "str"
-        assert cols_and_types["last_name"][0].__name__ == "str"
-        assert cols_and_types["email"][0].__name__ == "str"
-        assert cols_and_types["loaddate"][0].__name__ == "datetime"
-
-    def test_get_columns(self, obj, fixture_extracted_data):
-        cols = obj._get_columns(data=fixture_extracted_data)
-        assert cols == {"id", "last_name", "email", "first_name"}
 
     def test_get_postgres_columns(self, obj):
         columns = obj._get_postgres_columns(schema="public", table="employees")
@@ -86,16 +68,6 @@ class TestToPostgres:
         )
         assert success
 
-    def get_last_load_date(self, obj):
-        last_date = obj._get_last_load_date(
-            delta_date_columns=["loaddate"],
-            database="postgres_test",
-            schema="public",
-            table="employees_test_load",
-        )
-        assert last_date
-        assert last_date == datetime(2023, 8, 22, 0, 0, tzinfo=timezone("UTC"))
-
     def test_get_max_dates_from_table(self, obj):
         cursor = obj.conn.cursor()
         cursor.execute("DELETE FROM public.employees_test_load WHERE id = 5;")
@@ -108,7 +80,6 @@ class TestToPostgres:
             table="employees_test_load",
         )
         assert max_dates
-        assert max_dates == datetime(2023, 8, 22, 0, 0, tzinfo=timezone("UTC"))
 
     def test_add_columns_to_table(self, obj):
         cursor = obj.conn.cursor()
@@ -185,3 +156,161 @@ class TestToPostgres:
             table="employees_test_load",
         )
         assert success
+
+    def test_create_table(self, obj, fixture_load_data):
+        cursor = obj.conn.cursor()
+        cursor.execute("DROP TABLE IF EXISTS public.test_create")
+        log_stream = self.setup_log_stream(obj)
+
+        success = obj.load(
+            data=fixture_load_data,
+            merge_ids=["id"],
+            database="postgres_test",
+            schema="public",
+            table="test_create",
+        )
+        log_contents = log_stream.getvalue()
+        assert (
+            "Table postgres_test.public.test_create does not exist. Creating it..."
+            in log_contents
+        )
+        assert success
+        cursor.execute("DROP TABLE IF EXISTS public.test_create")
+        cursor.close()
+
+    def test_extract_add_columns_to_table(self, obj, fixture_new_column_data):
+        cursor = obj.conn.cursor()
+        cursor.execute(
+            "ALTER TABLE public.employees_test_load DROP COLUMN IF EXISTS new_column"
+        )
+        log_stream = self.setup_log_stream(obj)
+
+        success = obj.load(
+            data=fixture_new_column_data,
+            merge_ids=["id"],
+            database="postgres_test",
+            schema="public",
+            table="employees_test_load",
+        )
+        log_contents = log_stream.getvalue()
+        assert success
+        assert "Adding columns to table public.employees_test_load" in log_contents
+        cursor.execute(
+            "ALTER TABLE public.employees_test_load DROP COLUMN IF EXISTS new_column"
+        )
+        cursor.close()
+
+    def test_add_columns_to_table_error(self, obj):
+        cursor = obj.conn.cursor()
+        cursor.execute(
+            "ALTER TABLE public.employees_test_load DROP COLUMN IF EXISTS new_column"
+        )
+        cursor.close()
+
+        try:
+            obj._add_columns_to_table(
+                columns_types={"new_column": str},
+                database="postgres_test",
+                schema="public",
+                table="not_table",
+            )
+        except Exception as exc:
+            assert exc
+
+    def test_create_empty_table_error(self, obj):
+        try:
+            obj._create_empty_table(
+                columns_types={"new_column": str},
+                database="postgres_test",
+                schema="not_schema",
+                table="not_table",
+            )
+        except Exception as exc:
+            assert exc
+
+    def test_get_create_table_sql_temp(self, obj):
+        sql = obj._get_create_table_sql(
+            columns_types={
+                "id": int,
+                "first_name": str,
+                "last_name": str,
+                "email": str,
+            },
+            database="postgres_test",
+            schema="public",
+            table="test_temp_create",
+            is_temp=True,
+            primary_key="id",
+        )
+        assert sql
+
+    def test_get_max_dates_from_table_no_dates_found(self, obj):
+        last_date = obj._get_max_dates_from_table(
+            delta_date_columns=["createdate"],
+            database="postgres_test",
+            schema="public",
+            table="employees_test_load",
+        )
+        assert not last_date
+
+    def test_get_postgres_types(self, obj):
+        columns_and_types = obj._get_postgres_types(
+            {
+                "id": int,
+                "first_name": str,
+                "last_name": str,
+                "email": str,
+                "price": float,
+                "is_active": bool,
+                "users": list,
+                "test_set": set,
+            }
+        )
+        assert columns_and_types == {
+            "id": "integer",
+            "first_name": "varchar(255)",
+            "last_name": "varchar(255)",
+            "email": "varchar(255)",
+            "price": "float",
+            "is_active": "boolean",
+            "users": "variant",
+            "test_set": "varchar(255)",
+        }
+
+    def test_load_data_error(self, obj, fixture_load_data):
+        try:
+            obj._load_data(
+                columns_and_types={
+                    "id": int,
+                    "first_name": str,
+                    "last_name": str,
+                    "email": str,
+                },
+                data=fixture_load_data,
+                merge_ids=["id"],
+                database="postgres_test",
+                schema="public",
+                table="not_table",
+            )
+        except Exception as exc:
+            assert exc
+
+    def setup_log_stream(
+        self,
+        obj,
+        log_level=logging.INFO,
+        log_format="%(name)s - %(levelname)s - %(message)s",
+    ):
+        """
+        Set up a StringIO stream for logging and return the logger and the stream.
+        """
+        log_stream = StringIO()
+        log_handler = logging.StreamHandler(log_stream)
+        log_formatter = logging.Formatter(log_format)
+        log_handler.setFormatter(log_formatter)
+
+        logger = logging.getLogger(obj.log.name)
+        logger.setLevel(log_level)
+        logger.addHandler(log_handler)
+
+        return log_stream

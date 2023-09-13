@@ -1,3 +1,4 @@
+# pylint: disable=import-error, no-name-in-module
 """'
 This class is used to load data into a postgres database.
 It recieves a dataframe, a schema name, a table name, and a connection string.
@@ -9,9 +10,7 @@ from psycopg2 import connect
 
 from pytz import timezone
 
-from .interface.load_interface import (  # pylint: disable=import-error, no-name-in-module
-    LoadInterface,
-)
+from .interface.load_interface import LoadInterface
 
 
 class ToPostgres(LoadInterface):
@@ -95,9 +94,7 @@ class ToPostgres(LoadInterface):
     def _get_add_columns_sql(self, columns_types: dict, **kwargs) -> str:
         table_name = f'{kwargs["schema"]}.{kwargs["table"]}'
         sql = f"ALTER TABLE {table_name} ADD COLUMN "
-        print("Columns types ", columns_types)
         columns_types = self._get_postgres_types(columns_types)
-        print(columns_types)
 
         for col, col_type in columns_types.items():
             sql += f"{col} {col_type}, "
@@ -210,13 +207,11 @@ class ToPostgres(LoadInterface):
         try:
             cursor.execute(sql)
             max_date = cursor.fetchone()  # type: ignore
-            print(max_date)
         except Exception as exc:
             self.log.error("Error while executing SQL statement: %s", exc)
             return None
 
         last_date = max_date[0]
-        print("last date = ", last_date)
 
         if last_date:
             self.log.info("Last date in table: %s", last_date)
@@ -226,9 +221,9 @@ class ToPostgres(LoadInterface):
         return last_date
 
     def _get_postgres_types(self, columns_and_types: dict) -> dict:
-        print("Columns and types inside function ", columns_and_types)
         for name, _type in columns_and_types.items():
-            print("Type", _type)
+            if isinstance(_type, list):
+                _type = _type[0]
             _type = _type.__name__
             if _type == "str":
                 columns_and_types[name] = "varchar(255)"

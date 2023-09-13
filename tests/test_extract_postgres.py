@@ -63,3 +63,12 @@ class TestExtractPostgres:  # pylint: disable=too-few-public-methods
             last_date="2021-01-01",
         )
         assert sql == "SELECT * FROM public.employees where last_update >= '2021-01-01'"
+
+    def test_generate_where_clause_without_date(self, obj):
+        sql = obj._get_select_query(
+            schema="public",
+            table="employees",
+            delta_date_columns=["last_update"],
+            last_date=None,
+        )
+        assert sql == "SELECT * FROM public.employees"

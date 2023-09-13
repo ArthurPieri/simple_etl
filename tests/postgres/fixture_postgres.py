@@ -47,6 +47,22 @@ def fixture_load_data():
 
 
 @pytest.fixture
+def fixture_new_column_data():
+    """
+    Data to be loaded
+    """
+    return [
+        {
+            "id": 9,
+            "first_name": "joselito",
+            "last_name": "Smith",
+            "email": "joselito@jose.com",
+            "new_column": "new_value",
+        },
+    ]
+
+
+@pytest.fixture
 def fixture_rows_columns():
     """
     Rows and columns to test
