@@ -2,6 +2,8 @@
 """
 Tests for load_postgres.py and load_interface.py
 """
+from io import StringIO
+import logging
 
 from datetime import datetime
 from pytz import timezone  # pylint: disable=import-error
@@ -9,6 +11,7 @@ import pytest  # pylint: disable=import-error
 from .postgres.fixture_postgres import (  # pylint: disable=unused-import
     fixture_extracted_data,
     fixture_load_data,
+    fixture_new_column_data,
 )
 
 from ..src.load.load_postgres import ToPostgres
@@ -156,29 +159,62 @@ class TestToPostgres:  # pylint: disable=too-many-public-methods
         )
         assert success
 
-    def test_create_table(self):
-        # mock the return of _get_postgres_columns
-        # create_empty_table
-        # add_columns_to_table
-        pass
+    def test_create_table(self, obj, fixture_load_data):
+        cursor = obj.conn.cursor()
+        cursor.execute("DROP TABLE IF EXISTS public.test_create")
+        log_stream = self.setup_log_stream(obj)
 
-    def test_extract_add_columns_to_table(self):
-        # mock the return of _get_postgres_columns
-        # add_columns_to_table
-        pass
+        success = obj.load(
+            data=fixture_load_data,
+            merge_ids=["id"],
+            database="postgres_test",
+            schema="public",
+            table="test_create",
+        )
+        log_contents = log_stream.getvalue()
+        assert (
+            "Table postgres_test.public.test_create does not exist. Creating it..."
+            in log_contents
+        )
+        assert success
+        cursor.execute("DROP TABLE IF EXISTS public.test_create")
+        cursor.close()
+
+    def test_extract_add_columns_to_table(self, obj, fixture_new_column_data):
+        cursor = obj.conn.cursor()
+        cursor.execute(
+            "ALTER TABLE public.employees_test_load DROP COLUMN IF EXISTS new_column"
+        )
+        log_stream = self.setup_log_stream(obj)
+
+        success = obj.load(
+            data=fixture_new_column_data,
+            merge_ids=["id"],
+            database="postgres_test",
+            schema="public",
+            table="employees_test_load",
+        )
+        log_contents = log_stream.getvalue()
+        assert success
+        assert "Adding columns to table public.employees_test_load" in log_contents
+        cursor.execute(
+            "ALTER TABLE public.employees_test_load DROP COLUMN IF EXISTS new_column"
+        )
+        cursor.close()
 
     def test_add_columns_to_table_error(self):
-        # mock the return of _get_postgres_columns
-        # add_columns_to_table
+        # nao estou conseguindo forcar um erro aqui
         pass
 
     def test_create_empty_table_error(self):
+        # nao estou conseguindo forcar um erro aqui
         pass
 
     def test_get_create_table_sql_temp(self):
         pass
 
     def test_get_create_table_sql_error(self):
+        # nao estou conseguindo forcar um erro aqui
         pass
 
     def test_get_max_dates_from_table_with_none(self):
@@ -188,6 +224,7 @@ class TestToPostgres:  # pylint: disable=too-many-public-methods
         pass
 
     def test_get_max_dates_from_table_error(self):
+        # nao estou conseguindo forcar um erro aqui
         pass
 
     def test_get_max_date_error(self):
@@ -198,4 +235,25 @@ class TestToPostgres:  # pylint: disable=too-many-public-methods
         pass
 
     def test_load_data_error(self):
+        # nao estou conseguindo forcar um erro aqui
         pass
+
+    def setup_log_stream(
+        self,
+        obj,
+        log_level=logging.INFO,
+        log_format="%(name)s - %(levelname)s - %(message)s",
+    ):
+        """
+        Set up a StringIO stream for logging and return the logger and the stream.
+        """
+        log_stream = StringIO()
+        log_handler = logging.StreamHandler(log_stream)
+        log_formatter = logging.Formatter(log_format)
+        log_handler.setFormatter(log_formatter)
+
+        logger = logging.getLogger(obj.log.name)
+        logger.setLevel(log_level)
+        logger.addHandler(log_handler)
+
+        return log_stream

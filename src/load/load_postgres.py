@@ -94,9 +94,7 @@ class ToPostgres(LoadInterface):
     def _get_add_columns_sql(self, columns_types: dict, **kwargs) -> str:
         table_name = f'{kwargs["schema"]}.{kwargs["table"]}'
         sql = f"ALTER TABLE {table_name} ADD COLUMN "
-        print("Columns types ", columns_types)
         columns_types = self._get_postgres_types(columns_types)
-        print(columns_types)
 
         for col, col_type in columns_types.items():
             sql += f"{col} {col_type}, "
@@ -223,9 +221,9 @@ class ToPostgres(LoadInterface):
         return last_date
 
     def _get_postgres_types(self, columns_and_types: dict) -> dict:
-        print("Columns and types inside function ", columns_and_types)
         for name, _type in columns_and_types.items():
-            print("Type", _type)
+            if isinstance(_type, list):
+                _type = _type[0]
             _type = _type.__name__
             if _type == "str":
                 columns_and_types[name] = "varchar(255)"
