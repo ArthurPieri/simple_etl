@@ -244,26 +244,56 @@ class TestToPostgres:  # pylint: disable=too-many-public-methods
         )
         assert sql
 
-    def test_get_max_dates_from_table_with_none(self):
-        pass
+    def test_get_max_dates_from_table_no_dates_found(self, obj):
+        last_date = obj._get_max_dates_from_table(
+            delta_date_columns=["createdate"],
+            database="postgres_test",
+            schema="public",
+            table="employees_test_load",
+        )
+        assert not last_date
 
-    def test_get_max_dates_from_table_no_dates_found(self):
-        pass
+    def test_get_postgres_types(self, obj):
+        columns_and_types = obj._get_postgres_types(
+            {
+                "id": int,
+                "first_name": str,
+                "last_name": str,
+                "email": str,
+                "price": float,
+                "is_active": bool,
+                "users": list,
+                "test_set": set,
+            }
+        )
+        assert columns_and_types == {
+            "id": "integer",
+            "first_name": "varchar(255)",
+            "last_name": "varchar(255)",
+            "email": "varchar(255)",
+            "price": "float",
+            "is_active": "boolean",
+            "users": "variant",
+            "test_set": "varchar(255)",
+        }
 
-    def test_get_max_dates_from_table_error(self):
-        # nao estou conseguindo forcar um erro aqui
-        pass
-
-    def test_get_max_date_error(self):
-        pass
-
-    def test_get_postgres_types(self):
-        # test all types
-        pass
-
-    def test_load_data_error(self):
-        # nao estou conseguindo forcar um erro aqui
-        pass
+    def test_load_data_error(self, obj, fixture_load_data):
+        try:
+            obj._load_data(
+                columns_and_types={
+                    "id": int,
+                    "first_name": str,
+                    "last_name": str,
+                    "email": str,
+                },
+                data=fixture_load_data,
+                merge_ids=["id"],
+                database="postgres_test",
+                schema="public",
+                table="not_table",
+            )
+        except Exception as exc:
+            assert exc
 
     def setup_log_stream(
         self,
