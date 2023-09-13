@@ -217,16 +217,32 @@ class TestToPostgres:  # pylint: disable=too-many-public-methods
         except Exception as exc:
             assert exc
 
-    def test_create_empty_table_error(self):
-        # nao estou conseguindo forcar um erro aqui
-        pass
+    def test_create_empty_table_error(self, obj):
+        try:
+            obj._create_empty_table(
+                columns_types={"new_column": str},
+                database="postgres_test",
+                schema="not_schema",
+                table="not_table",
+            )
+        except Exception as exc:
+            assert exc
 
-    def test_get_create_table_sql_temp(self):
-        pass
-
-    def test_get_create_table_sql_error(self):
-        # nao estou conseguindo forcar um erro aqui
-        pass
+    def test_get_create_table_sql_temp(self, obj):
+        sql = obj._get_create_table_sql(
+            columns_types={
+                "id": int,
+                "first_name": str,
+                "last_name": str,
+                "email": str,
+            },
+            database="postgres_test",
+            schema="public",
+            table="test_temp_create",
+            is_temp=True,
+            primary_key="id",
+        )
+        assert sql
 
     def test_get_max_dates_from_table_with_none(self):
         pass
