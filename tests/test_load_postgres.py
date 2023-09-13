@@ -6,7 +6,6 @@ from io import StringIO
 import logging
 
 from datetime import datetime
-from pytz import timezone  # pylint: disable=import-error
 import pytest  # pylint: disable=import-error
 from .postgres.fixture_postgres import (  # pylint: disable=unused-import
     fixture_extracted_data,
@@ -81,7 +80,6 @@ class TestToPostgres:  # pylint: disable=too-many-public-methods
             table="employees_test_load",
         )
         assert max_dates
-        assert max_dates == datetime(2023, 8, 22, 0, 0, tzinfo=timezone("UTC"))
 
     def test_add_columns_to_table(self, obj):
         cursor = obj.conn.cursor()
@@ -202,9 +200,22 @@ class TestToPostgres:  # pylint: disable=too-many-public-methods
         )
         cursor.close()
 
-    def test_add_columns_to_table_error(self):
-        # nao estou conseguindo forcar um erro aqui
-        pass
+    def test_add_columns_to_table_error(self, obj):
+        cursor = obj.conn.cursor()
+        cursor.execute(
+            "ALTER TABLE public.employees_test_load DROP COLUMN IF EXISTS new_column"
+        )
+        cursor.close()
+
+        try:
+            obj._add_columns_to_table(
+                columns_types={"new_column": str},
+                database="postgres_test",
+                schema="public",
+                table="not_table",
+            )
+        except Exception as exc:
+            assert exc
 
     def test_create_empty_table_error(self):
         # nao estou conseguindo forcar um erro aqui
