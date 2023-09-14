@@ -13,13 +13,23 @@ def populate():
     Populate the collection with 10,000 documents.
     """
 
-    # Function to generate a random document
     def random_date():
         start_date = datetime(2019, 1, 1)
         end_date = datetime.now()
         time_delta = end_date - start_date
         random_days = random.randint(0, time_delta.days)
         return start_date + timedelta(days=random_days)
+
+    def random_mixed_type():
+        choice = random.choice(["int", "str", "list"])
+        return_data = None
+        if choice == "int":
+            return_data = random.randint(1, 100)
+        if choice == "str":
+            return_data = random.choice(["apple", "banana", "cherry"])
+        if choice == "list":
+            return_data = random.sample(range(10), 3)
+        return return_data
 
     def generate_document():
         # Base data
@@ -29,6 +39,7 @@ def populate():
             "isActive": random.choice([True, False]),
             "score": round(random.uniform(0, 100), 2),
             "createdAt": random_date(),
+            "mixedType": random_mixed_type(),
         }
 
         # Semi-structured data
