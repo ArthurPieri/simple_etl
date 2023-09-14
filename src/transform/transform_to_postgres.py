@@ -4,7 +4,7 @@ from .interface.transform_interface import (
 )
 
 
-class TrasnformPostgres(TransformInterface):
+class TransformPostgres(TransformInterface):
     """
     Makes all the treatment to load data into postgres
     """

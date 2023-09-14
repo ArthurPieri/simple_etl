@@ -27,6 +27,19 @@ class TransformInterface(ABC):
         Transform data from source and return a list of dicts
         """
 
+    def _flatten_data(self, data: list[dict]) -> list[dict]:
+        """
+        Flatten data to be sent to postgres.
+        """
+        # needs testing
+        for row in data:
+            for key, value in row.items():
+                if isinstance(value, dict):
+                    for key2, value2 in value.items():
+                        row[key + "_" + key2] = value2
+                    row.pop(key)
+        return data
+
     def _get_python_types(self, columns: set, data: list[dict]):
         """Get types for columns"""
         cols_and_types = {}
