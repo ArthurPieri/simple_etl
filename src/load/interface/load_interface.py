@@ -52,7 +52,6 @@ class LoadInterface(ABC):
         last_date = self._get_max_dates_from_table(delta_date_columns, **kwargs)
 
         if last_date:
-            last_date = last_date[0]
             self.log.info("Last date from table %s is %s", kwargs["table"], last_date)
 
         return last_date
