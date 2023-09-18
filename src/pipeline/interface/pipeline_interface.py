@@ -21,7 +21,7 @@ class PipelineInterface(ABC):
         self.percentage_rows_loaded = 0
 
     @abstractmethod
-    @get_execution_time
+    @_get_execution_time
     def run(self, **kwargs):
         """
         Run the pipeline recursively until all data is loaded
@@ -51,8 +51,8 @@ class PipelineInterface(ABC):
         """
 
     @abstractmethod
-    @get_execution_time
-    def pipeline(self, **kwargs) -> bool:
+    @_get_execution_time
+    def _pipeline(self, **kwargs) -> bool:
         """
         Create the pipeline
         # Kwargs arguments:
@@ -92,7 +92,7 @@ class PipelineInterface(ABC):
             "percentage_of_rows_loaded": self.percentage_rows_loaded,
         }
 
-    def get_execution_time(self, func):
+    def _get_execution_time(self, func):
         """
         Get the time it took to run a function
         """

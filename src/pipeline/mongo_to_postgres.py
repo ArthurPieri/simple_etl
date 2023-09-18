@@ -12,7 +12,7 @@ class MongoToPostgres(PipelineInterface):
     This class is used to run the pipeline from MongoDB to Postgres
     """
 
-    @PipelineInterface.get_execution_time
+    @PipelineInterface._get_execution_time
     def run(self, **kwargs):
         """
         Run the pipeline recursively until all data is loaded
@@ -52,7 +52,7 @@ class MongoToPostgres(PipelineInterface):
             - Dictionary of columns to be renamed from data
         """
         try:
-            is_success = self.pipeline(**kwargs)
+            is_success = self._pipeline(**kwargs)
             if is_success:
                 self.log.info(
                     "Pipeline ran successfully. Rows: %s extracted, %s transformed, %s loaded",
@@ -60,7 +60,7 @@ class MongoToPostgres(PipelineInterface):
                     self.number_of_rows_transformed,
                     self.number_of_rows_loaded,
                 )
-                self.pipeline(**kwargs)
+                self._pipeline(**kwargs)
             else:
                 self.log.info(
                     "Pipeline Finished. Rows: %s extracted, %s transformed, %s loaded",
@@ -72,8 +72,8 @@ class MongoToPostgres(PipelineInterface):
             self.log.error("Error running pipeline: %s", exc)
             raise RuntimeError(exc) from exc
 
-    @PipelineInterface.get_execution_time
-    def pipeline(self, **kwargs) -> bool:
+    @PipelineInterface._get_execution_time
+    def _pipeline(self, **kwargs) -> bool:
         """
         Create the pipeline
         """
