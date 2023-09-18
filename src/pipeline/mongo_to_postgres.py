@@ -122,6 +122,10 @@ class MongoToPostgres(PipelineInterface):
             columns_to_rename=kwargs["columns_to_rename"],
         )
 
+        if not transformed_data or len(transformed_data) == 0:
+            self.log.info("No data transformed")
+            return False
+
         self.number_of_rows_transformed = len(transformed_data)
 
         postgres.load(
