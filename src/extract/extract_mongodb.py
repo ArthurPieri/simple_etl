@@ -14,6 +14,16 @@ from .interface.extract_interface import ExtractInterface
 class FromMongodb(ExtractInterface):
     """
     Extract data from Mongodb and return a list of dictionaries
+    # Kwargs arguments
+    ## Required
+    - database
+    - collection
+    - aggregation_clause: dict
+    - delta_date_columns: list
+    - filter: list
+
+    ## Optional
+    - last_date: datetime
     """
 
     def extract(  # pylint: disable=dangerous-default-value
@@ -95,9 +105,6 @@ class FromMongodb(ExtractInterface):
 
         if kwargs["filter"] is not None:
             condition["$or"].extend(kwargs["filter"])
-
-        print(condition)
-        print(agg_clause)
 
         if not agg_clause:
             cursor = self.db[kwargs["collection"]].find_raw_batches(
