@@ -68,8 +68,6 @@ class MongoToPostgres(PipelineInterface):
             database=kwargs["postgres_database"],
         )
 
-        transform = TransformPostgres()
-
         last_date = postgres.get_last_date(
             delta_date_columns=kwargs["delta_date_columns"],
             table=kwargs["load_table"],
@@ -88,7 +86,7 @@ class MongoToPostgres(PipelineInterface):
 
         self.number_of_rows_extracted = len(extracted_data)
 
-        transformed_data = transform.transform(
+        transformed_data = TransformPostgres().transform(
             data=extracted_data,
             columns_to_drop=kwargs["columns_to_drop"],
             columns_to_rename=kwargs["columns_to_rename"],
@@ -103,5 +101,10 @@ class MongoToPostgres(PipelineInterface):
             schema=kwargs["load_schema"],
             database=kwargs["load_database"],
         )
+
+        self.number_of_rows_loaded = len(transformed_data)
+        self.percentage_rows_loaded = (
+            self.number_of_rows_loaded / self.number_of_rows_transformed
+        ) * 100
 
         return True
