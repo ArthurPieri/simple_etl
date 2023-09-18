@@ -22,9 +22,39 @@ class PipelineInterface(ABC):
 
     @abstractmethod
     @get_execution_time
-    def run(self, **kwargs) -> bool:
+    def run(self, **kwargs):
         """
-        Run the pipeline
+        Run the pipeline recursively until all data is loaded
+        # Kwargs arguments:
+        ## Required
+        - delta_date_columns: list,
+            - List of columns to be used to filter data
+        - merge_ids: list,
+            - List of columns to be used to merge data
+
+        ## Optional
+        - batch_size: int = 10000,
+            - Batch size to be used to extract and load data
+        - columns_to_drop: list = [],
+            - List of columns to be dropped from data
+        - columns_to_rename: dict = {},
+            - Dictionary of columns to be renamed from data
+
+        ## Dependent on the implementation
+        ### Extract class
+        - Extract conn args
+        - Extract database,schema,table or equivalent
+
+        ### Load class
+        - Load conn args
+        - load database,schema,table or equivalent
+        """
+
+    @abstractmethod
+    @get_execution_time
+    def pipeline(self, **kwargs) -> bool:
+        """
+        Create the pipeline
         # Kwargs arguments:
         ## Required
         - delta_date_columns: list,
@@ -71,7 +101,12 @@ class PipelineInterface(ABC):
             start_time = time.time()
             result = func(*args, **kwargs)
             end_time = time.time()
-            self.execution_time = end_time - start_time
+            elapsed_time = end_time - start_time
+            self.execution_time = elapsed_time
+            self.log.info(
+                "[Instance Timer] %s took %i.6f seconds.", func.__name__, elapsed_time
+            )
+
             return result
 
         return wrapper

@@ -15,7 +15,7 @@ class MongoToPostgres(PipelineInterface):
     @PipelineInterface.get_execution_time
     def run(self, **kwargs):
         """
-        Run the pipeline
+        Run the pipeline recursively until all data is loaded
         # Kwargs arguments:
         ## Required
         - delta_date_columns: list,
@@ -51,6 +51,32 @@ class MongoToPostgres(PipelineInterface):
         - columns_to_rename: dict = {},
             - Dictionary of columns to be renamed from data
         """
+        try:
+            is_success = self.pipeline(**kwargs)
+            if is_success:
+                self.log.info(
+                    "Pipeline ran successfully. Rows: %s extracted, %s transformed, %s loaded",
+                    self.number_of_rows_extracted,
+                    self.number_of_rows_transformed,
+                    self.number_of_rows_loaded,
+                )
+                self.pipeline(**kwargs)
+            else:
+                self.log.info(
+                    "Pipeline Finished. Rows: %s extracted, %s transformed, %s loaded",
+                    self.number_of_rows_extracted,
+                    self.number_of_rows_transformed,
+                    self.number_of_rows_loaded,
+                )
+        except Exception as exc:
+            self.log.error("Error running pipeline: %s", exc)
+            raise RuntimeError(exc) from exc
+
+    @PipelineInterface.get_execution_time
+    def pipeline(self, **kwargs) -> bool:
+        """
+        Create the pipeline
+        """
         mongodb = FromMongodb(
             auth=kwargs["mongodb_auth"],
             host=kwargs["mongodb_host"],
@@ -83,6 +109,10 @@ class MongoToPostgres(PipelineInterface):
             filter=kwargs["mongodb_filter"],
             last_date=last_date,
         )
+
+        if not extracted_data or len(extracted_data) == 0:
+            self.log.info("No data extracted")
+            return False
 
         self.number_of_rows_extracted = len(extracted_data)
 
