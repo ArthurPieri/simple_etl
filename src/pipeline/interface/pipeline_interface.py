@@ -6,12 +6,12 @@ from logging import getLogger, shutdown
 
 class PipelineInterface(ABC):
     """
-    This class is used to run the pipeline
+    Basic interface for every pipeline.
     """
 
     def __init__(self):
         """
-        Initialize the pipeline
+        Initialize the pipeline.
         """
         self.__start_log()
         self.number_of_rows_extracted = 0
@@ -21,7 +21,6 @@ class PipelineInterface(ABC):
         self.percentage_rows_loaded = 0
 
     @abstractmethod
-    @_get_execution_time
     def run(self, **kwargs):
         """
         Run the pipeline recursively until all data is loaded
@@ -30,7 +29,7 @@ class PipelineInterface(ABC):
         - delta_date_columns: list,
             - List of columns to be used to filter data
         - merge_ids: list,
-            - List of columns to be used to merge data
+            - List of columns to be used to merge data.
 
         ## Optional
         - batch_size: int = 10000,
@@ -51,7 +50,7 @@ class PipelineInterface(ABC):
         """
 
     @abstractmethod
-    @_get_execution_time
+    # Need to apply on the exectuion @_get_execution_time
     def _pipeline(self, **kwargs) -> bool:
         """
         Create the pipeline
@@ -60,7 +59,7 @@ class PipelineInterface(ABC):
         - delta_date_columns: list,
             - List of columns to be used to filter data
         - merge_ids: list,
-            - List of columns to be used to merge data
+            - List of columns to be used to merge data.
 
         ## Optional
         - batch_size: int = 10000,
@@ -82,7 +81,7 @@ class PipelineInterface(ABC):
 
     def get_stats(self) -> dict:
         """
-        Get stats from pipeline
+        Get stats from pipeline.
         """
         return {
             "number_of_rows_extracted": self.number_of_rows_extracted,
@@ -92,28 +91,28 @@ class PipelineInterface(ABC):
             "percentage_of_rows_loaded": self.percentage_rows_loaded,
         }
 
-    def _get_execution_time(self, func):
+    @staticmethod
+    def _get_execution_time(func):
         """
-        Get the time it took to run a function
+        Get the time it took to run a function.
         """
 
-        def wrapper(*args, **kwargs):
+        def wrapper(instance, *args, **kwargs):
             start_time = time.time()
-            result = func(*args, **kwargs)
+            result = func(instance, *args, **kwargs)
             end_time = time.time()
             elapsed_time = end_time - start_time
-            self.execution_time = elapsed_time
-            self.log.info(
+            instance.execution_time = elapsed_time
+            instance.log.info(
                 "[Instance Timer] %s took %i.6f seconds.", func.__name__, elapsed_time
             )
-
             return result
 
         return wrapper
 
     def __start_log(self) -> None:
         """
-        Start logging for class
+        Start logging for class.
         """
         self.log = getLogger(__name__)
         self.log.info("-----------------------------------------")

@@ -9,19 +9,25 @@ from .interface.pipeline_interface import PipelineInterface
 
 class MongoToPostgres(PipelineInterface):
     """'
-    This class is used to run the pipeline from MongoDB to Postgres
+    This class is used to run the pipeline from MongoDB to Postgres.
     """
 
-    @PipelineInterface._get_execution_time
-    def run(self, **kwargs):
+    # @PipelineInterface._get_execution_time
+    def run(self, **kwargs) -> str:
         """
-        Run the pipeline recursively until all data is loaded
+        Run the pipeline recursively until all data is loaded.
         # Kwargs arguments:
         ## Required
         - delta_date_columns: list,
             - List of columns to be used to filter data
         - merge_ids: list,
-            - List of columns to be used to merge data
+            - List of columns to be used to merge data.
+        - load_database: str,
+            - Database to load data
+        - load_schema: str,
+            - Schema to load data
+        - load_table: str,
+            - Table to load data.
 
         ### Mongodb_conn
         - mongodb_auth
@@ -72,10 +78,12 @@ class MongoToPostgres(PipelineInterface):
             self.log.error("Error running pipeline: %s", exc)
             raise RuntimeError(exc) from exc
 
-    @PipelineInterface._get_execution_time
+        return "Pipeline ran successfully."
+
+    # @PipelineInterface._get_execution_time
     def _pipeline(self, **kwargs) -> bool:
         """
-        Create the pipeline
+        Create the pipeline.
         """
         mongodb = FromMongodb(
             auth=kwargs["mongodb_auth"],
@@ -94,12 +102,14 @@ class MongoToPostgres(PipelineInterface):
             database=kwargs["postgres_database"],
         )
 
-        last_date = postgres.get_last_date(
+        last_date = postgres.get_last_load_date(
             delta_date_columns=kwargs["delta_date_columns"],
             table=kwargs["load_table"],
             schema=kwargs["load_schema"],
             database=kwargs["load_database"],
         )
+
+        print(last_date)
 
         extracted_data = mongodb.extract(
             delta_date_columns=kwargs["delta_date_columns"],
@@ -109,6 +119,8 @@ class MongoToPostgres(PipelineInterface):
             filter=kwargs["mongodb_filter"],
             last_date=last_date,
         )
+
+        print(extracted_data)
 
         if not extracted_data or len(extracted_data) == 0:
             self.log.info("No data extracted")
