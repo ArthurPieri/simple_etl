@@ -38,7 +38,7 @@ class TestMongoToPostgres:
             batch_size=10000,
             columns_to_drop=None,
             columns_to_rename=None,
-            merge_ids="_id",
+            merge_ids=None,
             load_table="employees_pipeline",
             load_schema="public",
             load_database="postgres_test",

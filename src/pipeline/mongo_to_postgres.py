@@ -1,6 +1,7 @@
 # pylint: disable=relative-beyond-top-level
-from ..extract.extract_mongodb import FromMongodb
+import time
 
+from ..extract.extract_mongodb import FromMongodb
 from ..transform.transform_to_postgres import TransformPostgres
 from ..load.load_postgres import ToPostgres
 
@@ -57,6 +58,7 @@ class MongoToPostgres(PipelineInterface):
         - columns_to_rename: dict = {},
             - Dictionary of columns to be renamed from data
         """
+        start_time = time.time()
         try:
             is_success = self._pipeline(**kwargs)
             if is_success:
@@ -76,8 +78,12 @@ class MongoToPostgres(PipelineInterface):
                 )
         except Exception as exc:
             self.log.error("Error running pipeline: %s", exc)
+            print(exc)
             raise RuntimeError(exc) from exc
 
+        end_time = time.time()
+        self.execution_time = end_time - start_time
+        self.log.info("Execution time of method run: %s", self.execution_time)
         return "Pipeline ran successfully."
 
     # @PipelineInterface._get_execution_time
@@ -85,6 +91,8 @@ class MongoToPostgres(PipelineInterface):
         """
         Create the pipeline.
         """
+        start_time = time.time()
+        self.number_of_executions += 1
         mongodb = FromMongodb(
             auth=kwargs["mongodb_auth"],
             host=kwargs["mongodb_host"],
@@ -109,7 +117,7 @@ class MongoToPostgres(PipelineInterface):
             database=kwargs["load_database"],
         )
 
-        print(last_date)
+        self.log.info(last_date)
 
         extracted_data = mongodb.extract(
             delta_date_columns=kwargs["delta_date_columns"],
@@ -120,19 +128,18 @@ class MongoToPostgres(PipelineInterface):
             last_date=last_date,
         )
 
-        print(extracted_data)
-
         if not extracted_data or len(extracted_data) == 0:
             self.log.info("No data extracted")
             return False
 
         self.number_of_rows_extracted = len(extracted_data)
 
-        transformed_data = TransformPostgres().transform(
+        transformed_columns, transformed_data = TransformPostgres().transform(
             data=extracted_data,
             columns_to_drop=kwargs["columns_to_drop"],
             columns_to_rename=kwargs["columns_to_rename"],
         )
+        self.log.info("Transformed columns: %s ", transformed_columns)
 
         if not transformed_data or len(transformed_data) == 0:
             self.log.info("No data transformed")
@@ -152,5 +159,12 @@ class MongoToPostgres(PipelineInterface):
         self.percentage_rows_loaded = (
             self.number_of_rows_loaded / self.number_of_rows_transformed
         ) * 100
+        end_time = time.time()
+        execution_time = end_time - start_time
+        self.log.info("Execution time of method _pipeline: %s", execution_time)
+        self.log.info("Number of rows extracted: %s", self.number_of_rows_extracted)
+        self.log.info("Number of rows transformed: %s", self.number_of_rows_transformed)
+        self.log.info("Number of rows loaded: %s", self.number_of_rows_loaded)
+        self.log.info("Pipeline ran successfully.")
 
         return True

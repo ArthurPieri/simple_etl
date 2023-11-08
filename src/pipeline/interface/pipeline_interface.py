@@ -1,4 +1,3 @@
-import time
 from abc import ABC, abstractmethod
 
 from logging import getLogger, shutdown
@@ -19,6 +18,7 @@ class PipelineInterface(ABC):
         self.number_of_rows_loaded = 0
         self.execution_time = 0
         self.percentage_rows_loaded = 0
+        self.number_of_executions = 0
 
     @abstractmethod
     def run(self, **kwargs):
@@ -90,25 +90,6 @@ class PipelineInterface(ABC):
             "execution_time": self.execution_time,
             "percentage_of_rows_loaded": self.percentage_rows_loaded,
         }
-
-    @staticmethod
-    def _get_execution_time(func):
-        """
-        Get the time it took to run a function.
-        """
-
-        def wrapper(instance, *args, **kwargs):
-            start_time = time.time()
-            result = func(instance, *args, **kwargs)
-            end_time = time.time()
-            elapsed_time = end_time - start_time
-            instance.execution_time = elapsed_time
-            instance.log.info(
-                "[Instance Timer] %s took %i.6f seconds.", func.__name__, elapsed_time
-            )
-            return result
-
-        return wrapper
 
     def __start_log(self) -> None:
         """
