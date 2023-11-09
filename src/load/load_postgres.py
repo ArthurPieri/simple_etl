@@ -314,7 +314,6 @@ class ToPostgres(LoadInterface):
             postgres_columns_and_types = self._get_postgres_types(
                 columns_and_types=data_columns_types
             )
-            print("\n\n postgres_columns_and_types", postgres_columns_and_types, "\n\n")
             cursor = self.conn.cursor()
             self.log.info(
                 "Loading data into table %s.%s", kwargs["schema"], kwargs["table"]
@@ -324,7 +323,6 @@ class ToPostgres(LoadInterface):
                 merge_ids=merge_ids,
                 **kwargs,
             )
-            print("\n\n", insert_sql, "\n\n")
             for key in row.keys():
                 if isinstance(row[key], list):
                     row[key] = json.dumps({"$list": row[key]})

@@ -78,7 +78,6 @@ class MongoToPostgres(PipelineInterface):
                 )
         except Exception as exc:
             self.log.error("Error running pipeline: %s", exc)
-            print(exc)
             raise RuntimeError(exc) from exc
 
         end_time = time.time()
