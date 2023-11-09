@@ -273,7 +273,7 @@ class TestToPostgres:  # pylint: disable=too-many-public-methods
             "email": "varchar(255)",
             "price": "float",
             "is_active": "boolean",
-            "users": "variant",
+            "users": "json",
             "test_set": "varchar(255)",
         }
 

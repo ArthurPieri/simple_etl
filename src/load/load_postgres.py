@@ -1,4 +1,4 @@
-# pylint: disable=import-error, no-name-in-module
+# pylint: disable=import-error, no-name-in-module, broad-except, attribute-defined-outside-init, duplicate-code, consider-iterating-dictionary
 """'
 This class is used to load data into a postgres database.
 It recieves a dataframe, a schema name, a table name, and a connection string.
@@ -20,7 +20,7 @@ class ToPostgres(LoadInterface):
     Load data into postgres.
     """
 
-    def load(  # pylint: disable=dangerous-default-value
+    def load(
         self,
         data: list[dict],
         merge_ids: list,
@@ -116,7 +116,7 @@ class ToPostgres(LoadInterface):
             cursor.execute(create_table_sql)
             self.conn.commit()
             return True
-        except Exception as error:  # pylint: disable=broad-except
+        except Exception as error:
             self.log.error(
                 "Error creating table %s.%s", kwargs["schema"], kwargs["table"]
             )
@@ -154,7 +154,6 @@ class ToPostgres(LoadInterface):
 
         return sql
 
-    # pylint: disable=duplicate-code
     def _get_connection(self, **kwargs) -> None:
         """
         Get connection to Postgres
@@ -165,7 +164,7 @@ class ToPostgres(LoadInterface):
         - password
         - database
         """
-        self.conn = connect(  # pylint: disable=attribute-defined-outside-init
+        self.conn = connect(
             host=kwargs["host"],
             port=kwargs["port"],
             user=kwargs["user"],
@@ -232,20 +231,22 @@ class ToPostgres(LoadInterface):
                 _type = _type[0]
             _type = _type.__name__
 
-            if _type == "str":
-                columns_and_types[name] = "varchar(255)"
-            elif _type == "int":
-                columns_and_types[name] = "integer"
-            elif _type == "float":
-                columns_and_types[name] = "float"
-            elif _type == "bool":
-                columns_and_types[name] = "boolean"
-            elif _type in ("dict", "list"):
-                columns_and_types[name] = "json"
-            elif _type == "datetime":
-                columns_and_types[name] = "timestamp"
+            type_map = {
+                "str": "varchar(255)",
+                "int": "integer",
+                "float": "float",
+                "bool": "boolean",
+                "dict": "json",
+                "list": "json",
+                "datetime": "timestamp",
+            }
+
+            type_name = type_map.get(_type)
+            if type_name:
+                columns_and_types[name] = type_map[_type]
             else:
                 columns_and_types[name] = "varchar(255)"
+
         for name in to_remove:
             del columns_and_types[name]
         return columns_and_types
