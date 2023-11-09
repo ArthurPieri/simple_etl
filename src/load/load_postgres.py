@@ -308,13 +308,13 @@ class ToPostgres(LoadInterface):
     def _load_data(
         self, columns_and_types: dict, data: list[dict], merge_ids: list, **kwargs
     ) -> bool:
+        cursor = self.conn.cursor()
         for row in data:
             columns = self._get_columns(data=[row])
             data_columns_types = self._get_python_types(columns, [row])
             postgres_columns_and_types = self._get_postgres_types(
                 columns_and_types=data_columns_types
             )
-            cursor = self.conn.cursor()
             self.log.info(
                 "Loading data into table %s.%s", kwargs["schema"], kwargs["table"]
             )
@@ -341,5 +341,5 @@ class ToPostgres(LoadInterface):
                 self.log.error(error)
                 self.conn.rollback()
                 raise error
-            finally:
-                cursor.close()
+
+        cursor.close()
