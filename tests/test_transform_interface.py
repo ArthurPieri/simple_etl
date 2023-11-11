@@ -5,12 +5,12 @@ from .postgres.fixture_postgres import (
     fixture_load_data,
 )
 
-from ..src.transform.transform_to_postgres import TrasnformPostgres
+from ..src.transform.transform_to_postgres import TransformPostgres
 
 
 @pytest.fixture(scope="module")
 def obj():
-    yield TrasnformPostgres()
+    yield TransformPostgres()
 
 
 class TestTransformPostgres:

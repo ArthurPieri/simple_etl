@@ -19,7 +19,7 @@ def obj():
 
 class TestFromMongodb:
     """
-    Testing extract mongodb class
+    Testing extract mongodb class.
     """
 
     def test_extract(self, obj):

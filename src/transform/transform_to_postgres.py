@@ -1,10 +1,8 @@
 # pylint: disable=import-error, no-name-in-module, too-few-public-methods
-from .interface.transform_interface import (
-    TransformInterface,
-)
+from .interface.transform_interface import TransformInterface
 
 
-class TrasnformPostgres(TransformInterface):
+class TransformPostgres(TransformInterface):
     """
     Makes all the treatment to load data into postgres
     """
@@ -15,7 +13,7 @@ class TrasnformPostgres(TransformInterface):
         columns_to_drop: list = [],
         columns_to_rename: dict = {},
         **kwargs  # pylint: disable=unused-argument
-    ) -> [dict]:
+    ) -> list[dict]:
         """
         Transform data to be sent to postgres
         """

@@ -23,7 +23,7 @@ class ExtractInterface(ABC):
         batch_size: int = 10000,
         last_date=None,
         **kwargs
-    ) -> dict:
+    ) -> list[dict]:
         """
         Extract data from source and return a list of dicts
         """
@@ -34,7 +34,6 @@ class ExtractInterface(ABC):
         Get connection from .env file or other source
         Parameters:
         - **Kwargs parameters are used to get connection
-        - kwargs['conn_name']: name of the connection
         """
 
     @abstractmethod

@@ -1,10 +1,12 @@
-# pylint: disable=import-error, no-name-in-module
+# pylint: disable=import-error, no-name-in-module, broad-except, attribute-defined-outside-init, duplicate-code, consider-iterating-dictionary
 """'
 This class is used to load data into a postgres database.
 It recieves a dataframe, a schema name, a table name, and a connection string.
 Makes all the treatment necessary and then loads the data into the specified table.
 """
 import re
+
+import json
 
 from psycopg2 import connect
 
@@ -18,7 +20,7 @@ class ToPostgres(LoadInterface):
     Load data into postgres.
     """
 
-    def load(  # pylint: disable=dangerous-default-value
+    def load(
         self,
         data: list[dict],
         merge_ids: list,
@@ -93,11 +95,11 @@ class ToPostgres(LoadInterface):
 
     def _get_add_columns_sql(self, columns_types: dict, **kwargs) -> str:
         table_name = f'{kwargs["schema"]}.{kwargs["table"]}'
-        sql = f"ALTER TABLE {table_name} ADD COLUMN "
+        sql = f"ALTER TABLE {table_name}"
         columns_types = self._get_postgres_types(columns_types)
 
         for col, col_type in columns_types.items():
-            sql += f"{col} {col_type}, "
+            sql += f" ADD COLUMN IF NOT EXISTS {col} {col_type}, "
 
         sql = sql[:-2]
         self.log.info("SQL statement: %s", sql)
@@ -114,7 +116,7 @@ class ToPostgres(LoadInterface):
             cursor.execute(create_table_sql)
             self.conn.commit()
             return True
-        except Exception as error:  # pylint: disable=broad-except
+        except Exception as error:
             self.log.error(
                 "Error creating table %s.%s", kwargs["schema"], kwargs["table"]
             )
@@ -152,7 +154,6 @@ class ToPostgres(LoadInterface):
 
         return sql
 
-    # pylint: disable=duplicate-code
     def _get_connection(self, **kwargs) -> None:
         """
         Get connection to Postgres
@@ -163,7 +164,7 @@ class ToPostgres(LoadInterface):
         - password
         - database
         """
-        self.conn = connect(  # pylint: disable=attribute-defined-outside-init
+        self.conn = connect(
             host=kwargs["host"],
             port=kwargs["port"],
             user=kwargs["user"],
@@ -221,39 +222,53 @@ class ToPostgres(LoadInterface):
         return last_date
 
     def _get_postgres_types(self, columns_and_types: dict) -> dict:
+        to_remove = []
         for name, _type in columns_and_types.items():
+            if not _type:
+                to_remove.append(name)
+                continue
             if isinstance(_type, list):
                 _type = _type[0]
             _type = _type.__name__
-            if _type == "str":
-                columns_and_types[name] = "varchar(255)"
-            elif _type == "int":
-                columns_and_types[name] = "integer"
-            elif _type == "float":
-                columns_and_types[name] = "float"
-            elif _type == "bool":
-                columns_and_types[name] = "boolean"
-            elif _type in ("dict", "list"):
-                columns_and_types[name] = "variant"
-            elif _type == "datetime":
-                columns_and_types[name] = "timestamp"
+
+            type_map = {
+                "str": "varchar(255)",
+                "int": "integer",
+                "float": "float",
+                "bool": "boolean",
+                "dict": "json",
+                "list": "json",
+                "datetime": "timestamp",
+            }
+
+            type_name = type_map.get(_type)
+            if type_name:
+                columns_and_types[name] = type_map[_type]
             else:
                 columns_and_types[name] = "varchar(255)"
+
+        for name in to_remove:
+            del columns_and_types[name]
         return columns_and_types
 
     def _get_postgres_columns(self, **kwargs) -> list:
         columns = []
-        with self.conn.cursor() as cursor:
+        cursor = self.conn.cursor()
+        try:
             cursor.execute(
                 f"""
-                SELECT column_name
-                FROM information_schema.columns
-                WHERE table_schema = '{kwargs["schema"]}'
-                AND table_name = '{kwargs["table"]}'
-                """
+            SELECT column_name
+            FROM information_schema.columns
+            WHERE table_schema = '{kwargs["schema"]}'
+            AND table_name = '{kwargs["table"]}'
+            """
             )
             columns = cursor.fetchall()
             columns = [column[0] for column in columns]
+        except Exception as exc:
+            self.log.error("Error getting columns from table: %s", exc)
+            self.conn.rollback()
+            return None
         return columns
 
     def _get_insert_sql(
@@ -294,22 +309,37 @@ class ToPostgres(LoadInterface):
         self, columns_and_types: dict, data: list[dict], merge_ids: list, **kwargs
     ) -> bool:
         cursor = self.conn.cursor()
-        self.log.info(
-            "Loading data into table %s.%s", kwargs["schema"], kwargs["table"]
-        )
-        insert_sql = self._get_insert_sql(
-            columns_and_types=columns_and_types, merge_ids=merge_ids, **kwargs
-        )
-        try:
-            cursor.executemany(insert_sql, data)
-            self.conn.commit()
-            return True
-        except Exception as error:
-            self.log.error(
-                "Error loading data into table %s.%s", kwargs["schema"], kwargs["table"]
+        for row in data:
+            columns = self._get_columns(data=[row])
+            data_columns_types = self._get_python_types(columns, [row])
+            postgres_columns_and_types = self._get_postgres_types(
+                columns_and_types=data_columns_types
             )
-            self.log.error(error)
-            self.conn.rollback()
-            raise error
-        finally:
-            cursor.close()
+            self.log.info(
+                "Loading data into table %s.%s", kwargs["schema"], kwargs["table"]
+            )
+            insert_sql = self._get_insert_sql(
+                columns_and_types=postgres_columns_and_types,
+                merge_ids=merge_ids,
+                **kwargs,
+            )
+            for key in row.keys():
+                if isinstance(row[key], list):
+                    row[key] = json.dumps({"$list": row[key]})
+                if isinstance(row[key], dict):
+                    row[key] = json.dumps(row[key])
+            try:
+                cursor.execute(insert_sql, row)
+                self.conn.commit()
+                return True
+            except Exception as error:
+                self.log.error(
+                    "Error loading data into table %s.%s",
+                    kwargs["schema"],
+                    kwargs["table"],
+                )
+                self.log.error(error)
+                self.conn.rollback()
+                raise error
+
+        cursor.close()
