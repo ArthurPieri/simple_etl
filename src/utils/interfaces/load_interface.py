@@ -1,13 +1,14 @@
 # pylint: disable=duplicate-code, import-error
 
 from abc import ABC, abstractmethod
-from logging import getLogger, shutdown
 from datetime import datetime
 
 from pytz import timezone
 
+from .my_log import LoggingEtl
 
-class LoadInterface(ABC):
+
+class LoadInterface(ABC, LoggingEtl):
     """
     This class is used to load data to lake.
     It recieves a dataframe, a schema name, and a table name.
@@ -21,7 +22,7 @@ class LoadInterface(ABC):
         """
         In the child class you should define what parameters to be used to get connection
         """
-        self.__start_log()
+        super().__init__()
 
         self._get_connection(**kwargs)
 
@@ -121,16 +122,6 @@ class LoadInterface(ABC):
 
         return columns
 
-    def __start_log(self):  # pylint: disable=unused-private-member
-        """
-        Start logging for class
-        """
-        self.log = getLogger(__name__)  # pylint: disable=attribute-defined-outside-init
-        self.log.info("-----------------------------------------")
-        self.log.info("Initializing %s class", self.__class__.__name__)
-        self.log.info("-----------------------------------------")
-
     def __del__(self):
         self.conn.close()  # pylint: disable=no-member # type: ignore
         self.log.info("Connection %s closed", self.__class__.__name__)
-        shutdown()

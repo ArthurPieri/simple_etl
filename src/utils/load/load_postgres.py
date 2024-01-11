@@ -1,4 +1,4 @@
-# pylint: disable=import-error, no-name-in-module, broad-except, attribute-defined-outside-init, duplicate-code, consider-iterating-dictionary
+# pylint: disable=import-error, no-name-in-module, broad-except, attribute-defined-outside-init, duplicate-code, consider-iterating-dictionary, relative-beyond-top-level, too-few-public-methods
 """'
 This class is used to load data into a postgres database.
 It recieves a dataframe, a schema name, a table name, and a connection string.
@@ -12,7 +12,7 @@ from psycopg2 import connect
 
 from pytz import timezone
 
-from .interface.load_interface import LoadInterface
+from ..interfaces.load_interface import LoadInterface
 
 
 class ToPostgres(LoadInterface):
@@ -315,6 +315,9 @@ class ToPostgres(LoadInterface):
             postgres_columns_and_types = self._get_postgres_types(
                 columns_and_types=data_columns_types
             )
+            if columns_and_types != postgres_columns_and_types:
+                self.log.warning("Expected Columns and types do not match")
+
             self.log.info(
                 "Loading data into table %s.%s", kwargs["schema"], kwargs["table"]
             )

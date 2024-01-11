@@ -10,7 +10,7 @@ from .postgres.fixture_postgres import (  # pylint: disable=unused-import
     fixture_load_data,
 )
 
-from ..src.load.load_postgres import ToPostgres
+from ..src.utils.load.load_postgres import ToPostgres
 
 
 @pytest.fixture(scope="module")
