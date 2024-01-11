@@ -1,5 +1,5 @@
-# pylint: disable=import-error, no-name-in-module, too-few-public-methods
-from .interface.transform_interface import TransformInterface
+# pylint: disable=import-error, no-name-in-module, too-few-public-methods, relative-beyond-top-level
+from ..interfaces.transform_interface import TransformInterface
 
 
 class TransformPostgres(TransformInterface):
