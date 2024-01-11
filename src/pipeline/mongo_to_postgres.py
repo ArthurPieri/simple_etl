@@ -1,11 +1,11 @@
-# pylint: disable=relative-beyond-top-level
+# pylint: disable=relative-beyond-top-level, no-member, attribute-defined-outside-init, too-few-public-methods
 import time
 
-from ..extract.extract_mongodb import FromMongodb
-from ..transform.transform_to_postgres import TransformPostgres
-from ..load.load_postgres import ToPostgres
+from ..utils.extract.extract_mongodb import FromMongodb
+from ..utils.transform.transform_to_postgres import TransformPostgres
+from ..utils.load.load_postgres import ToPostgres
 
-from .interface.pipeline_interface import PipelineInterface
+from ..utils.interfaces.pipeline_interface import PipelineInterface
 
 
 class MongoToPostgres(PipelineInterface):

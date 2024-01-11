@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 
-from logging import getLogger, shutdown
+from .my_log import LoggingEtl
 
 
-class PipelineInterface(ABC):
+class PipelineInterface(ABC, LoggingEtl):
     """
     Basic interface for every pipeline.
     """
@@ -12,7 +12,7 @@ class PipelineInterface(ABC):
         """
         Initialize the pipeline.
         """
-        self.__start_log()
+        super().__init__()
         self.number_of_rows_extracted = 0
         self.number_of_rows_transformed = 0
         self.number_of_rows_loaded = 0
@@ -90,16 +90,3 @@ class PipelineInterface(ABC):
             "execution_time": self.execution_time,
             "percentage_of_rows_loaded": self.percentage_rows_loaded,
         }
-
-    def __start_log(self) -> None:
-        """
-        Start logging for class.
-        """
-        self.log = getLogger(__name__)
-        self.log.info("-----------------------------------------")
-        self.log.info("Initializing %s class", self.__class__.__name__)
-        self.log.info("-----------------------------------------")
-
-    def __del__(self) -> None:
-        self.log.info("Connection %s closed", self.__class__.__name__)
-        shutdown()
