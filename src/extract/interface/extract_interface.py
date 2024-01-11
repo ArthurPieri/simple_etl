@@ -1,7 +1,7 @@
-# pylint: disable=duplicate-code
+# pylint: disable=duplicate-code, line-too-long
 
 from abc import ABC, abstractmethod
-from logging import getLogger
+import logging
 
 
 class ExtractInterface(ABC):
@@ -12,7 +12,7 @@ class ExtractInterface(ABC):
     """
 
     def __init__(self, **kwargs) -> object:
-        self.__start_log()
+        self.__start_log(**kwargs)
 
         self._get_connection(**kwargs)
 
@@ -22,7 +22,7 @@ class ExtractInterface(ABC):
         delta_date_columns: list,
         batch_size: int = 10000,
         last_date=None,
-        **kwargs
+        **kwargs,
     ) -> list[dict]:
         """
         Extract data from source and return a list of dicts
@@ -42,11 +42,25 @@ class ExtractInterface(ABC):
         Close connection to source and shutdown logging
         """
 
-    def __start_log(self) -> None:
+    def __start_log(self, **kwargs) -> None:
         """
         Start logging for class
         """
-        self.log = getLogger(__name__)  # pylint: disable=attribute-defined-outside-init
-        self.log.info("-----------------------------------------")
-        self.log.info("Initializing %s class", self.__class__.__name__)
-        self.log.info("-----------------------------------------")
+        if kwargs["filename"]:
+            logging.basicConfig(
+                filename=f"{kwargs['filename']}.log",
+                encoding="utf-8",
+                level=logging.DEBUG,
+                format="[DATA] %(filename)s Line:%(lineno)d %(asctime)s [%(levelname)s] - %(message)s",
+            )
+        else:
+            logging.basicConfig(
+                filename=f"{self.__class__.__name__}.log",
+                encoding="utf-8",
+                level=logging.DEBUG,
+                format="[DATA] %(filename)s Line:%(lineno)d %(asctime)s [%(levelname)s] - %(message)s",
+            )
+        self.log = logging.LoggerAdapter(
+            logging.getLogger(self.__class__.__name__),
+            {"class": self.__class__.__name__},
+        )
