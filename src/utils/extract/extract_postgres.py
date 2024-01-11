@@ -1,9 +1,9 @@
-# pylint: disable=import-error, no-name-in-module, too-few-public-methods
+# pylint: disable=import-error, no-name-in-module, too-few-public-methods, relative-beyond-top-level
 from logging import shutdown
 
 from psycopg2 import connect
 
-from .interface.extract_interface import ExtractInterface
+from ..interfaces.extract_interface import ExtractInterface
 
 
 class FromPostgres(ExtractInterface):

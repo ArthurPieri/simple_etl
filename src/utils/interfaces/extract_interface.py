@@ -1,10 +1,10 @@
 # pylint: disable=duplicate-code, line-too-long
 
 from abc import ABC, abstractmethod
-import logging
+from .my_log import LoggingEtl
 
 
-class ExtractInterface(ABC):
+class ExtractInterface(ABC, LoggingEtl):
     """'
     This class is used to extract data from the source.
     It receives a schema name, a table name, and a list of delta_date_columns.
@@ -12,7 +12,7 @@ class ExtractInterface(ABC):
     """
 
     def __init__(self, **kwargs) -> object:
-        self.__start_log(**kwargs)
+        super().__init__()
 
         self._get_connection(**kwargs)
 
@@ -41,26 +41,3 @@ class ExtractInterface(ABC):
         """
         Close connection to source and shutdown logging
         """
-
-    def __start_log(self, **kwargs) -> None:
-        """
-        Start logging for class
-        """
-        if kwargs["filename"]:
-            logging.basicConfig(
-                filename=f"{kwargs['filename']}.log",
-                encoding="utf-8",
-                level=logging.DEBUG,
-                format="[DATA] %(filename)s Line:%(lineno)d %(asctime)s [%(levelname)s] - %(message)s",
-            )
-        else:
-            logging.basicConfig(
-                filename=f"{self.__class__.__name__}.log",
-                encoding="utf-8",
-                level=logging.DEBUG,
-                format="[DATA] %(filename)s Line:%(lineno)d %(asctime)s [%(levelname)s] - %(message)s",
-            )
-        self.log = logging.LoggerAdapter(
-            logging.getLogger(self.__class__.__name__),
-            {"class": self.__class__.__name__},
-        )

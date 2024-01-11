@@ -1,6 +1,8 @@
 # pylint: disable=missing-module-docstring, missing-function-docstring, too-few-public-methods. redefined-outer-name, protected-access, unused-import
 import pytest
-from ..src.extract.extract_postgres import FromPostgres  # pylint: disable=import-error
+from ..src.utils.extract.extract_postgres import (
+    FromPostgres,
+)  # pylint: disable=import-error
 from .postgres.fixture_postgres import (
     fixture_extracted_data,
     fixture_rows_columns,

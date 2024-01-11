@@ -1,4 +1,4 @@
-# pylint: disable=import-error, no-name-in-module, too-few-public-methods, attribute-defined-outside-init, protected-access, unused-import
+# pylint: disable=import-error, no-name-in-module, too-few-public-methods, attribute-defined-outside-init, protected-access, unused-import, relative-beyond-top-level
 import json
 from logging import shutdown
 from datetime import datetime
@@ -8,7 +8,7 @@ from pymongo import MongoClient
 from bson import decode_all
 from bson.json_util import dumps
 
-from .interface.extract_interface import ExtractInterface
+from ..interfaces.extract_interface import ExtractInterface
 
 
 class FromMongodb(ExtractInterface):
