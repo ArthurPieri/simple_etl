@@ -112,3 +112,51 @@ docker exec -it es01 /usr/share/elasticsearch/bin/elasticsearch-create-enrollmen
 ```bash
 docker exec -it es01 /usr/share/elasticsearch/bin/elasticsearch-reset-password -u elastic
 ```
+
+## Install logstash using Docker
+
+```bash
+docker pull docker.elastic.co/logstash/logstash:8.11.4
+```
+
+Run and condigure logstash
+
+```bash
+docker run --rm -it -v ~/pipeline/:/usr/share/logstash/pipeline/ docker.elastic.co/logstash/logstash:8.11.4
+```
+
+## Install Elastic Agent
+
+There are two images for Elastic Agent, elastic-agent and elastic-agent-complete. The elastic-agent image contains all the binaries for running Beats, while the elastic-agent-complete image contains these binaries plus additional dependencies to run browser monitors through Elastic Synthetics. Refer to Synthetic monitoring via Elastic Agent and Fleet for more information.
+
+Run the docker pull command against the Elastic Docker registry:
+
+```bash
+docker pull docker.elastic.co/beats/elastic-agent:8.11.4
+```
+
+If you want to run Synthetics tests, run the docker pull command to fetch the elastic-agent-complete image:
+
+```bash
+docker pull docker.elastic.co/beats/elastic-agent-complete:8.11.4
+```
+
+### Get aware of the Elastic Agent Container command
+
+```bash
+docker run --rm docker.elastic.co/beats/elastic-agent:8.11.4 elastic-agent container -h
+```
+
+```bash
+docker run \
+  --env FLEET_SERVER_ENABLE=true \ 
+  --env FLEET_SERVER_ELASTICSEARCH_HOST=<elasticsearch-host> \ 
+  --env FLEET_SERVER_SERVICE_TOKEN=<service-token> \ 
+  --env FLEET_SERVER_POLICY_ID=<fleet-server-policy> \ 
+  -p 8220:8220 \ 
+  --rm docker.elastic.co/beats/elastic-agent:8.11.4 
+```
+
+> [install heartbeat](https://www.elastic.co/guide/en/beats/heartbeat/8.11/heartbeat-installation-configuration.html#heartbeat-installation-configuration)
+> [Metricbeat](https://www.elastic.co/guide/en/beats/metricbeat/8.11/metricbeat-overview.html)
+> [APM Server](https://www.elastic.co/guide/en/apm/guide/8.11/apm-quick-start.html)
