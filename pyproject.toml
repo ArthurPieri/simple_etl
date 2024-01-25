@@ -13,6 +13,9 @@ psycopg2-binary = "^2.9.6"
 pytz = "^2023.3"
 pymongo = "^4.5.0"
 pytest-mock = "^3.11.1"
+logstash = "^0.1.dev0"
+python-logstash = "^0.4.8"
+fluentd-logger = "^1.0.0"
 
 [tool.poetry.group.code_quality.dependencies]
 black = "^23.7.0"
